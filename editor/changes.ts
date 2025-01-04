@@ -4855,6 +4855,19 @@ export class ChangeSongTitle extends Change {
     }
 }
 
+export class ChangeLoopType extends Change {
+    constructor(doc: SongDocument, oldValue: number, newValue: number) {
+        super();
+        if (newValue < 3) {
+            newValue++;} else {
+            newValue = 1;
+        }
+        doc.song.loopType = newValue;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+
 export class ChangeChannelName extends Change {
     constructor(doc: SongDocument, oldValue: string, newValue: string) {
         super();

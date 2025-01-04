@@ -6,44 +6,69 @@ import {ColorConfig} from "../editor/ColorConfig";
 export class Preferences {
 	public static readonly defaultVisibleOctaves: number = 3;
 	
-	public customTheme: string | null;
-	public customTheme2: string | null;
+	// Technical
 	public autoPlay: boolean;
 	public autoFollow: boolean;
 	public enableNotePreview: boolean;
-	public showFifth: boolean = true;
 	public notesOutsideScale: boolean;
 	public defaultScale: number;
-	public showLetters: boolean;
-	public showChannels: boolean;
-	public showScrollBar: boolean;
 	public alwaysFineNoteVol: boolean;
-	public displayVolumeBar: boolean;
+	public enableChannelMuting: boolean;
 	public instrumentCopyPaste: boolean;
 	public instrumentImportExport: boolean;
-	public instrumentButtonsAtTop: boolean;
-	public enableChannelMuting: boolean;
-	public colorTheme: string;
-	public layout: string;
 	public displayBrowserUrl: boolean;
-	public volume: number = 75;
-	public visibleOctaves: number = Preferences.defaultVisibleOctaves;
-	public pressControlForShortcuts: boolean;
-	public keyboardLayout: string;
-	public bassOffset: number;
+	public closePromptByClickoff: boolean;
+	//public oldMobileLayout: boolean;
+	//public instrumentSettingsSimplifier: boolean;
+
+	// Appearance
+	public showThird: boolean;
+	public showFifth: boolean;
+	public advancedColorScheme: boolean;
+	public notesFlashWhenPlayed: boolean;
+	public showChannels: boolean;
+	public showScrollBar: boolean;
+	public showLetters: boolean;
+	public displayVolumeBar: boolean;
+	public showOscilloscope: boolean;
+	public showSampleLoadingStatus: boolean;
+	public showDescription: boolean;
+	public frostedGlassBackground: boolean;
+	public displayShortcutButtons: boolean;
+	public oldModNotes: boolean;
+	public selectionCounter: boolean;
+	public layout: string;
+	public colorTheme: string;
+	
+
+	// Midi stuff
 	public enableMidi: boolean;
 	public showRecordButton: boolean;
 	public snapRecordedNotesToRhythm: boolean;
 	public ignorePerformedNotesNotInScale: boolean;
 	public metronomeCountIn: boolean;
 	public metronomeWhileRecording: boolean;
-	public notesFlashWhenPlayed: boolean;
-	public showOscilloscope: boolean;
-	public showSampleLoadingStatus: boolean;
-	public showDescription: boolean;
+	
+	
+	//idk
+	public volume: number = 75;
+	public visibleOctaves: number = Preferences.defaultVisibleOctaves;
+	public pressControlForShortcuts: boolean;
+	public keyboardLayout: string;
+	public bassOffset: number;
+
+	//custom theme stuff
+	public customTheme: string | null;
+	public customTheme2: string | null;
+	public customFont: string;
+	public customBG: string;
+	public customIcons: string;
+	public customBorder: string;
+	public customCursor: string;
+	
+	// stuff I'm not using
 	public showInstrumentScrollbars: boolean;
-	public closePromptByClickoff: boolean;
-	public frostedGlassBackground: boolean;
+	public instrumentButtonsAtTop: boolean;
 	
 	constructor() {
 		this.reload();

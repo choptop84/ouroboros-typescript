@@ -5,7 +5,7 @@ import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
 import { ChannelRow } from "./ChannelRow";
 import { InputBox } from "./HTMLWrapper";
-import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel } from "./changes";
+import { ChangeChannelOrder, ChangeChannelName, ChangeRemoveChannel, ChangeLoopType } from "./changes";
 import { Config } from "../synth/SynthConfig";
 import { SongEditor } from "./SongEditor";
 
@@ -13,6 +13,7 @@ import { SongEditor } from "./SongEditor";
 export class MuteEditor {
 
     private _cornerFiller: HTMLDivElement = HTML.div({ style: `background: ${ColorConfig.editorBackground}; position: sticky; bottom: 0; left: 0; width: 32px; height: 30px;` });
+    public _loopButtonInput: HTMLButtonElement = HTML.button({class: "songLoopButton",style: 'width: 100%;'});
 
     private readonly _buttons: HTMLDivElement[] = [];
     private readonly _channelCounts: HTMLDivElement[] = [];
@@ -56,6 +57,7 @@ export class MuteEditor {
         this._channelNameInput.input.addEventListener("blur", this._channelNameInputHide);
         this._channelNameInput.input.addEventListener("mousedown", this._channelNameInputClicked);
         this._channelNameInput.input.addEventListener("input", this._channelNameInputWhenInput);
+        this._loopButtonInput.addEventListener("click", this._changeLoopType);
     }
 
     private _channelNameInputWhenInput = (): void => {
@@ -68,6 +70,10 @@ export class MuteEditor {
     private _channelNameInputClicked = (event: MouseEvent): void => {
         event.stopPropagation();
     }
+
+	private _changeLoopType = (): void => {
+		this._doc.record(new ChangeLoopType(this._doc, this._doc.song.loopType, this._doc.song.loopType));
+	}
 
     private _channelNameInputHide = (): void => {
         this._channelNameInput.input.style.setProperty("display", "none");
@@ -309,6 +315,7 @@ export class MuteEditor {
             this._buttons.length = this._doc.song.getChannelCount();
 
             this.container.appendChild(this._cornerFiller);
+            this._cornerFiller.appendChild(this._loopButtonInput);
         }
 
         for (let y: number = 0; y < this._doc.song.getChannelCount(); y++) {

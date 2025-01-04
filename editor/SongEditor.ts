@@ -58,6 +58,8 @@ import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
 
+const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
+
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
     for (let index: number = 0; index < items.length; index++) {
         menu.appendChild(option({ value: index }, items[index]));
@@ -817,9 +819,13 @@ export class SongEditor {
         ),
         optgroup({ label: "Appearance" },
         option({ value: "showFifth" }, 'Highlight "Fifth" Note'),
+        option({ value: "showThird" }, 'Highlight "Third" Note'),
+        option({ value: "advancedColorScheme"}, "Advanced Color Scheme (ModBox)"),
         option({ value: "notesFlashWhenPlayed" }, "Notes Flash When Played"),
         option({ value: "instrumentButtonsAtTop" }, "Instrument Buttons at Top"),
         option({ value: "frostedGlassBackground" }, "Frosted Glass Prompt Backdrop"),
+        option({ value: "oldModNotes" }, 'Use Old Mod Notes'),
+        option({ value: "selectionCounter" }, 'Selection Counter'),
         option({ value: "showChannels" }, "Show All Channels"),
         option({ value: "showScrollBar" }, "Show Octave Scroll Bar"),
         option({ value: "showInstrumentScrollbars" }, "Show Intsrument Scrollbars"),
@@ -1224,6 +1230,10 @@ export class SongEditor {
             div({ class: "drumSelect", style: "display:contents" }, this._drumPresetSelect)
         ),
     );
+
+    private selectedPatternCounter: HTMLDivElement = div({style:"margin:5px; pointer-events: none;"},this._doc.selection.boxSelectionWidth*this._doc.selection.boxSelectionHeight);
+    private selectedPatternDiv: HTMLDivElement = div({style:"background: var(--ui-widget-background); font-weight: bold; border-radius: 5px; height: 32px; position: absolute; font-size: 20px; text-align: center; align-content: center;", title:"The total number of patterns you have selected in the track editor."}, this.selectedPatternCounter);
+
     private readonly _instrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
         this._instrumentSettingsTextRow,
         this._instrumentsButtonRow,
@@ -1248,6 +1258,17 @@ export class SongEditor {
     private readonly _promptContainerBG: HTMLDivElement = div({ class: "promptContainerBG", style: "display: none; height: 100%; width: 100%; position: fixed; z-index: 99; overflow-x: hidden; pointer-events: none;" });
     private readonly _zoomInButton: HTMLButtonElement = button({ class: "zoomInButton", type: "button", title: "Zoom In" });
     private readonly _zoomOutButton: HTMLButtonElement = button({ class: "zoomOutButton", type: "button", title: "Zoom Out" });
+    private readonly _undoButton: HTMLButtonElement = button({ class: "undoButton", type: "button", title: "Undo Changes" });
+    private readonly _redoButton: HTMLButtonElement = button({ class: "redoButton", type: "button", title: "Redo Changes" });    
+    private readonly _copyPatternButton: HTMLButtonElement = button({ class: "copyPatternButton", type: "button", title: "Copy Selected Notes" });
+    private readonly _pastePatternButton: HTMLButtonElement = button({ class: "pastePatternButton", type: "button", title: "Paste Selected Notes" });   
+    private readonly _insertChannelButton: HTMLButtonElement = button({ class: "insertChannelButton", type: "button", title: "Insert Channel Below"});
+    private readonly _deleteChannelButton: HTMLButtonElement = button({ class: "deleteChannelButton", type: "button", title: "Delete Selected Channel"}); 
+    private readonly _selectAllButton: HTMLButtonElement = button({class:"selectAllButton", type:"button", title:"Select All"});
+    private readonly _duplicateButton: HTMLButtonElement = button({class:"duplicateButton", type:"button", title:"Duplicate Selected Pattern"});  
+    private readonly _notesUpButton: HTMLButtonElement = button({ class: "notesUpButton", type: "button", title: "Move Notes Up" });
+    private readonly _notesDownButton: HTMLButtonElement = button({ class: "notesDownButton", type: "button", title: "Move Notes Down" });
+    private readonly _loopBarButton: HTMLButtonElement = button({ class: "loopBarButton", type: "button", title: "Loop only on the Currently Selected Bar" });
     private readonly _patternEditorRow: HTMLDivElement = div({ style: "flex: 1; height: 100%; display: flex; overflow: hidden; justify-content: center;" },
         this._patternEditorPrev.container,
         this._patternEditor.container,
@@ -1259,6 +1280,20 @@ export class SongEditor {
         this._octaveScrollBar.container,
         this._zoomInButton,
         this._zoomOutButton,
+        div({ id: "shortcut-buttons" }, 
+            this._undoButton,
+            this._redoButton,
+            this._copyPatternButton,
+            this._pastePatternButton,
+            this._insertChannelButton,
+            this._deleteChannelButton,
+            this._selectAllButton,
+            this._duplicateButton,        
+            this._notesUpButton,
+            this._notesDownButton,
+            this._loopBarButton,
+        ),
+        this.selectedPatternDiv,
     );
     private readonly _trackContainer: HTMLDivElement = div({ class: "trackContainer" },
         this._trackEditor.container,
@@ -1629,6 +1664,7 @@ export class SongEditor {
         this._vibratoTypeSelect.addEventListener("change", this._whenSetVibratoType);
         this._playButton.addEventListener("click", this.togglePlay);
         this._pauseButton.addEventListener("click", this.togglePlay);
+        this._muteEditor._loopButtonInput.addEventListener("click", this._loopTypeEvent);
         this._recordButton.addEventListener("click", this._toggleRecord);
         this._stopButton.addEventListener("click", this._toggleRecord);
         // Start recording instead of opening context menu when control-clicking the record button on a Mac.
@@ -1649,6 +1685,17 @@ export class SongEditor {
         this._volumeSlider.input.addEventListener("input", this._setVolumeSlider);
         this._zoomInButton.addEventListener("click", this._zoomIn);
         this._zoomOutButton.addEventListener("click", this._zoomOut);
+        this._undoButton.addEventListener("click", this._undo);
+        this._redoButton.addEventListener("click", this._redo);
+        this._copyPatternButton.addEventListener("click", this._copy);
+        this._pastePatternButton.addEventListener("click", this._paste);
+        this._insertChannelButton.addEventListener("click", this._insertChannel);
+        this._deleteChannelButton.addEventListener("click", this._deleteChannel);
+        this._selectAllButton.addEventListener("click", this._selectAll);
+        this._duplicateButton.addEventListener("click", this._duplicate);
+        this._notesUpButton.addEventListener("click", this._notesUp);
+        this._notesDownButton.addEventListener("click", this._notesDown);
+        this._loopBarButton.addEventListener("click", this._tempLoopBar);
         this._patternArea.addEventListener("mousedown", this._refocusStageNotEditing);
         this._trackArea.addEventListener("mousedown", this.refocusStage);
 
@@ -1746,7 +1793,65 @@ export class SongEditor {
             const layoutOption: HTMLOptionElement = <HTMLOptionElement>this._optionsMenu.querySelector("[value=layout]");
             layoutOption.disabled = true;
             layoutOption.setAttribute("hidden", "");
+
+            const MobileButtonOption: HTMLOptionElement = <HTMLOptionElement>this._optionsMenu.querySelector("[value=displayShortcutButtons]");
+            MobileButtonOption.disabled = true;
+            MobileButtonOption.setAttribute("hidden", "");
+
         }
+    }
+
+    public static readonly _styleElement: HTMLStyleElement = document.head.appendChild(HTML.style({type: "text/css"}));
+
+    public static readonly _setLoopIcon: {[K: string]: string} = { 
+        "1": `
+        .songLoopButton::before {
+              mask-image: var(--loop-within-bar-symbol);
+              -webkit-mask-image: var(--loop-within-bar-symbol);
+            }
+        `,
+        "2": `
+        .songLoopButton::before {
+            mask-image: var(--loop-full-song-symbol);
+            -webkit-mask-image: var(--loop-full-song-symbol);
+          }
+        `,
+        "3": `
+        .songLoopButton::before {
+            mask-image: var(--dont-loop-symbol);
+            -webkit-mask-image: var(--dont-loop-symbol);
+          }
+        `,
+    }
+
+    private _loopTypeEvent = (): void => {
+    // This stuff makes it so then the loop shit only works when the value is NOT 3
+    if (this._doc.song.loopType == 3) {
+        this._doc.synth.loopRepeatCount = 0;
+        this._loopEditor.container.style.display = "none"; // setting the display to none instead of the opacity to 0 makes it so then you can't edit the values when in this mode
+        SongEditor._styleElement.textContent = SongEditor._setLoopIcon[3];
+        this._doc.synth.loopBarStart = -1;
+        this._doc.synth.loopBarEnd = -1;
+        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+        this._loopBarButton.style.display = "none";
+        this._trackAndMuteContainer.style.marginBottom = "0.3em";
+        } else if (this._doc.song.loopType == 2) {
+            this._doc.synth.loopRepeatCount = -1;
+            this._loopEditor.container.style.display = "none";
+            SongEditor._styleElement.textContent = SongEditor._setLoopIcon[2];	
+            this._doc.synth.loopBarStart = -1;
+            this._doc.synth.loopBarEnd = -1;
+            this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+            this._loopBarButton.style.display = "none";
+            this._trackAndMuteContainer.style.marginBottom = "0.3em";
+        } else if (this._doc.song.loopType == 1) {
+            this._doc.synth.loopRepeatCount = -1;
+            this._loopEditor.container.style.display = "";
+            SongEditor._styleElement.textContent = SongEditor._setLoopIcon[1];	
+            this._loopBarButton.style.display = this._doc.prefs.displayShortcutButtons ? "" : "none";
+            this._trackAndMuteContainer.style.marginBottom = "";
+        }
+
     }
 
     private _whenSampleLoadingStatusClicked = (): void => {
@@ -2230,6 +2335,7 @@ export class SongEditor {
                 this._doc.synth.determineInvalidModulators(channel.instruments[j]);
             }
         }
+        this._loopTypeEvent();
         this._barScrollBar.render();
         this._trackEditor.render();
         this._muteEditor.render();
@@ -2262,6 +2368,16 @@ export class SongEditor {
             const beatWidth: number = Math.max(minBeatWidth, Math.min(maxBeatWidth, targetBeatWidth));
             const patternEditorWidth: number = beatWidth * this._doc.song.beatsPerBar;
 
+            if (this._doc.selection.boxSelectionWidth*this._doc.selection.boxSelectionHeight > 1) {
+                this.selectedPatternCounter.innerHTML = String(this._doc.selection.boxSelectionWidth*this._doc.selection.boxSelectionHeight);
+                this.selectedPatternDiv.style.display = this._doc.prefs.selectionCounter ? "" : "none";
+                this.selectedPatternDiv.style.left = prefs.showLetters ? "40px" : "10px";
+                this.selectedPatternDiv.style.top = prefs.displayShortcutButtons ? "200px" : "10px";
+                this.selectedPatternDiv.style.right = "";
+            } else {
+                this.selectedPatternDiv.style.display = "none";
+            }
+
             const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
 
             if (this._doc.prefs.showDescription == false) {
@@ -2286,6 +2402,39 @@ export class SongEditor {
             this._zoomOutButton.style.display = (this._doc.channel < this._doc.song.pitchChannelCount) ? "" : "none";
             this._zoomInButton.style.right = prefs.showScrollBar ? "24px" : "4px";
             this._zoomOutButton.style.right = prefs.showScrollBar ? "24px" : "4px";
+
+            this._undoButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._redoButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._copyPatternButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._pastePatternButton.style.display = prefs.displayShortcutButtons ? "" : "none";            
+            this._insertChannelButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._deleteChannelButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._selectAllButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._duplicateButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            if (this._doc.song.loopType != 1) {
+                this._loopBarButton.style.display = prefs.displayShortcutButtons ? "none" : "none"; 
+            } else if (this._doc.song.loopType == 1) {
+                this._loopBarButton.style.display = prefs.displayShortcutButtons ? "" : "none"; 
+            }
+            this._notesDownButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._notesUpButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+
+            this._undoButton.style.left = prefs.showLetters ? "40px" : "10px";
+            this._redoButton.style.left = prefs.showLetters ? "70px" : "40px";
+            this._copyPatternButton.style.left = prefs.showLetters ? "40px" : "10px";
+            this._pastePatternButton.style.left = prefs.showLetters ? "70px" : "40px";
+            this._insertChannelButton.style.left = prefs.showLetters ? "40px" : "10px";
+            this._deleteChannelButton.style.left = prefs.showLetters ? "70px" : "40px";
+            this._selectAllButton.style.left = prefs.showLetters ? "40px" : "10px";
+            this._duplicateButton.style.left = prefs.showLetters ? "70px" : "40px";   
+            this._notesUpButton.style.left = prefs.showLetters ? "40px" : "10px";
+            this._notesDownButton.style.left = prefs.showLetters ? "70px" : "40px";
+            this._loopBarButton.style.left = prefs.showLetters ? "40px" : "10px";  
+
+            const secondImage = document.getElementById("secondImage");
+            if (secondImage != null) {
+            secondImage!.style.minHeight = "100vh"; }
+
         } else {
             this._patternEditor.container.style.width = "";
             this._patternEditor.container.style.flexShrink = "";
@@ -2293,6 +2442,49 @@ export class SongEditor {
             this._patternEditorNext.container.style.display = "none";
             this._zoomInButton.style.display = "none";
             this._zoomOutButton.style.display = "none";
+
+            if (this._doc.selection.boxSelectionWidth*this._doc.selection.boxSelectionHeight > 1) {
+                this.selectedPatternCounter.innerHTML = String(this._doc.selection.boxSelectionWidth*this._doc.selection.boxSelectionHeight);
+                this.selectedPatternDiv.style.display = this._doc.prefs.selectionCounter ? "" : "none";
+                this.selectedPatternDiv.style.right = "104.5%";
+                this.selectedPatternDiv.style.left = "";
+                this.selectedPatternDiv.style.top = prefs.displayShortcutButtons ? "200px" : "10px";
+            } else {
+                this.selectedPatternDiv.style.display = "none";
+            }
+
+            this._undoButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._redoButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._copyPatternButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._pastePatternButton.style.display = prefs.displayShortcutButtons ? "" : "none";            
+            this._insertChannelButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._deleteChannelButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._selectAllButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._duplicateButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            if (this._doc.song.loopType != 1) {
+                this._loopBarButton.style.display = prefs.displayShortcutButtons ? "none" : "none"; 
+            } else if (this._doc.song.loopType == 1) {
+                this._loopBarButton.style.display = prefs.displayShortcutButtons ? "" : "none"; 
+            }
+            this._notesDownButton.style.display = prefs.displayShortcutButtons ? "" : "none";
+            this._notesUpButton.style.display = prefs.displayShortcutButtons ? "" : "none"; 
+
+            this._undoButton.style.left = "-80px";
+            this._redoButton.style.left = "-50px";
+            this._copyPatternButton.style.left = "-80px";
+            this._pastePatternButton.style.left = "-50px";
+            this._insertChannelButton.style.left = "-80px";
+            this._deleteChannelButton.style.left = "-50px";
+            this._selectAllButton.style.left = "-80px";
+            this._duplicateButton.style.left = "-50px";   
+            this._notesUpButton.style.left = "-80px";
+            this._notesDownButton.style.left = "-50px"; 
+            this._loopBarButton.style.left = "-50px";
+            beepboxEditorContainer.style.paddingBottom = "";
+            beepboxEditorContainer.style.borderStyle = "";
+            const secondImage = document.getElementById("secondImage");
+            if (secondImage != null) {
+                secondImage!.style.minHeight = "100vh"; }
         }
         this._patternEditor.render();
 
@@ -2318,9 +2510,13 @@ export class SongEditor {
             textSpacingIcon + "Note Recording...",
             textSpacingIcon + "Appearance",
             (prefs.showFifth ? textOnIcon : textOffIcon) + 'Highlight "Fifth" Note',
+            (prefs.showThird ? textOnIcon : textOffIcon) + 'Highlight "Third" Note',
+            (prefs.advancedColorScheme ? textOnIcon : textOffIcon) + 'Advanced Color Scheme (ModBox)',
             (prefs.notesFlashWhenPlayed ? textOnIcon : textOffIcon) + "Notes Flash When Played",
             (prefs.instrumentButtonsAtTop ? textOnIcon : textOffIcon) + "Instrument Buttons at Top",
             (prefs.frostedGlassBackground ? textOnIcon : textOffIcon) + "Frosted Glass Prompt Backdrop",
+            (prefs.oldModNotes ? textOnIcon : textOffIcon) + "Use Old Mod Notes",
+            (prefs.selectionCounter ? textOnIcon : textOffIcon) + "Selection Counter",
             (prefs.showChannels ? textOnIcon : textOffIcon) + "Show All Channels",
             (prefs.showScrollBar ? textOnIcon : textOffIcon) + "Show Octave Scroll Bar",
             (prefs.showInstrumentScrollbars ? textOnIcon : textOffIcon) + "Show Instrument Scrollbars",
@@ -4072,39 +4268,40 @@ export class SongEditor {
                     if (event.shiftKey) {
                         this._openPrompt("beatsPerBar");
                     } else {
-                        const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
-                        const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
-                        if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
-                            || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
-                        ) {
-                            this._doc.synth.loopBarStart = leftSel;
-                            this._doc.synth.loopBarEnd = rightSel;
+                        if (this._doc.song.loopType == 1) {
+                            const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                            const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                            if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
+                                || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
+                            ) {
+                                this._doc.synth.loopBarStart = leftSel;
+                                this._doc.synth.loopBarEnd = rightSel;
 
-                            if (!this._doc.synth.playing) {
+                                if (!this._doc.synth.playing) {
+                                    this._doc.synth.snapToBar();
+                                    this._doc.performance.play();
+                                }
+                            }
+                            else {
+                                this._doc.synth.loopBarStart = -1;
+                                this._doc.synth.loopBarEnd = -1;
+                            }
+
+                            // Pressed while viewing a different bar than the current synth playhead.
+                            if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
+
+                                this._doc.synth.goToBar(this._doc.bar);
                                 this._doc.synth.snapToBar();
-                                this._doc.performance.play();
-                            }
-                        }
-                        else {
-                            this._doc.synth.loopBarStart = -1;
-                            this._doc.synth.loopBarEnd = -1;
-                        }
+                                this._doc.synth.initModFilters(this._doc.song);
+                                this._doc.synth.computeLatestModValues();
+                                if (this._doc.prefs.autoFollow) {
+                                    this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                                }
 
-                        // Pressed while viewing a different bar than the current synth playhead.
-                        if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
-
-                            this._doc.synth.goToBar(this._doc.bar);
-                            this._doc.synth.snapToBar();
-                            this._doc.synth.initModFilters(this._doc.song);
-                            this._doc.synth.computeLatestModValues();
-                            if (this._doc.prefs.autoFollow) {
-                                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
                             }
 
+                            this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
                         }
-
-                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
-
                     }
                 }
                 event.preventDefault();
@@ -4193,49 +4390,52 @@ export class SongEditor {
                     this._openPrompt("customSongEQFilterSettings");
                 }
                 break;
-            case 70: // f
+                case 70: // f (+shift: Set playerhead to loop start)
                 if (canPlayNotes) break;
-                if (event.shiftKey) { // if shift+f, move to start of loop bar instead 
-                    
-                    this._doc.synth.loopBarStart = -1;
-                    this._doc.synth.loopBarEnd = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                if (this._doc.song.loopType == 1) {
+                    if (event.shiftKey) {
+                        
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
-                    this._doc.synth.goToBar(this._doc.song.loopStart);
-                    this._doc.synth.snapToBar();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
-                    }
-                    event.preventDefault();
-                } else if (event.altKey) {
-                    //open / close all fm dropdowns
-                    const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-                    const operatorCount: number = instrument.type == InstrumentType.fm ? 4 : 6;
-                    let isAllOpen: boolean = true;
-                    for (let i = 0; i < operatorCount; i++) {
-                        if (!this._openOperatorDropdowns[i]) isAllOpen = false;
-                    }
-                    for (let i = 0; i < operatorCount; i++) {
-                        if (this._openOperatorDropdowns[i] == false && !isAllOpen || isAllOpen)
-                            this._toggleDropdownMenu(DropdownID.FM, i);
-                    }
-                    event.preventDefault();
-                } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+                        this._doc.synth.goToBar(this._doc.song.loopStart);
+                        this._doc.synth.snapToBar();
+                        this._doc.synth.initModFilters(this._doc.song);
+                        this._doc.synth.computeLatestModValues();
+                        if (this._doc.prefs.autoFollow) {
+                            this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                        }
+                        event.preventDefault();
+                        
+                    } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
 
-                    this._doc.synth.loopBarStart = -1;
-                    this._doc.synth.loopBarEnd = -1;
-                    this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
 
-                    this._doc.synth.snapToStart();
-                    this._doc.synth.initModFilters(this._doc.song);
-                    this._doc.synth.computeLatestModValues();
-                    if (this._doc.prefs.autoFollow) {
-                        this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                        this._doc.synth.snapToStart();
+                        this._doc.synth.initModFilters(this._doc.song);
+                        this._doc.synth.computeLatestModValues();
+                        if (this._doc.prefs.autoFollow) {
+                            this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                        }
+                        event.preventDefault();
                     }
-                    event.preventDefault();
-                } 
+                 } else if (needControlForShortcuts == (event.ctrlKey || event.metaKey)) {
+
+                        this._doc.synth.loopBarStart = -1;
+                        this._doc.synth.loopBarEnd = -1;
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+
+                        this._doc.synth.snapToStart();
+                        this._doc.synth.initModFilters(this._doc.song);
+                        this._doc.synth.computeLatestModValues();
+                        if (this._doc.prefs.autoFollow) {
+                            this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                        }
+                        event.preventDefault();
+                    }
                 break;
             case 72: // h
                 if (canPlayNotes) break;
@@ -5204,6 +5404,77 @@ export class SongEditor {
         this.refocusStage();
     }
 
+        private _undo = (): void => {
+        this._doc.undo();
+    }
+
+    private _redo = (): void => {
+        this._doc.redo();
+    }
+
+    private _copy = (): void => {
+        this._doc.selection.copy();
+    }
+
+    private _paste = (): void => {
+        this._doc.selection.pasteNotes();
+    }
+
+    private _insertChannel = (): void => {
+        this._doc.selection.insertChannel();
+    }
+
+    private _deleteChannel = (): void => {
+        this._doc.selection.deleteChannel();
+    }
+
+    private _selectAll = (): void => {
+        this._doc.selection.selectAll();
+    }
+
+    private _duplicate = (): void => {
+        this._doc.selection.duplicatePatterns(false);
+    }
+
+    private _notesUp = (): void => {
+        this._doc.selection.transpose(true, false);
+    }
+
+    private _notesDown = (): void => {
+        this._doc.selection.transpose(false, false);
+    }
+
+    private _tempLoopBar = (): void => {
+        const leftSel = Math.min(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                        const rightSel = Math.max(this._doc.selection.boxSelectionX0, this._doc.selection.boxSelectionX1);
+                        if ((leftSel < this._doc.synth.loopBarStart || this._doc.synth.loopBarStart == -1)
+                            || (rightSel > this._doc.synth.loopBarEnd || this._doc.synth.loopBarEnd == -1)
+                        ) {
+                                this._doc.synth.loopBarStart = leftSel;
+                                this._doc.synth.loopBarEnd = rightSel; 
+
+                            if (!this._doc.synth.playing) {
+                                this._doc.synth.snapToBar();
+                                this._doc.performance.play();
+                            }
+                        }
+                        else {
+                            this._doc.synth.loopBarStart = -1;
+                            this._doc.synth.loopBarEnd = -1;
+                        }
+                        // Pressed while viewing a different bar than the current synth playhead.
+                        if (this._doc.bar != Math.floor(this._doc.synth.playhead) && this._doc.synth.loopBarStart != -1) {
+                            this._doc.synth.goToBar(this._doc.bar);
+                            this._doc.synth.snapToBar();
+                            this._doc.synth.initModFilters(this._doc.song);
+                            this._doc.synth.computeLatestModValues();
+                            if (this._doc.prefs.autoFollow) {
+                                this._doc.selection.setChannelBar(this._doc.channel, Math.floor(this._doc.synth.playhead));
+                            }
+                        }
+                        this._loopEditor.setLoopAt(this._doc.synth.loopBarStart, this._doc.synth.loopBarEnd);
+    }
+
     private _fileMenuHandler = (event: Event): void => {
         switch (this._fileMenu.value) {
             case "new":
@@ -5338,6 +5609,12 @@ export class SongEditor {
             case "showFifth":
                 this._doc.prefs.showFifth = !this._doc.prefs.showFifth;
                 break;
+            case "showThird":
+                this._doc.prefs.showThird = !this._doc.prefs.showThird;
+                break;    
+            case "advancedColorScheme":
+                this._doc.prefs.advancedColorScheme = !this._doc.prefs.advancedColorScheme;
+                break;      
             case "notesOutsideScale":
                 this._doc.prefs.notesOutsideScale = !this._doc.prefs.notesOutsideScale;
                 break;
@@ -5356,6 +5633,8 @@ export class SongEditor {
             case "enableChannelMuting":
                 this._doc.prefs.enableChannelMuting = !this._doc.prefs.enableChannelMuting;
                 for (const channel of this._doc.song.channels) channel.muted = false;
+                this._doc.synth.loopRepeatCount = -1;
+                this._loopEditor.container.style.display = "";
                 break;
             case "displayBrowserUrl":
                 this._doc.toggleDisplayBrowserUrl();
@@ -5366,6 +5645,12 @@ export class SongEditor {
             case "notesFlashWhenPlayed":
                 this._doc.prefs.notesFlashWhenPlayed = !this._doc.prefs.notesFlashWhenPlayed;
                 break;
+            case "oldModNotes":
+                this._doc.prefs.oldModNotes = !this._doc.prefs.oldModNotes;
+                break;
+            case "selectionCounter":
+                this._doc.prefs.selectionCounter = !this._doc.prefs.selectionCounter;
+                break;        
             case "layout":
                 this._openPrompt("layout");
                 break;

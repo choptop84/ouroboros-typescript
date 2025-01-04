@@ -23,8 +23,8 @@ export function prettyNumber(value: number): string {
 }
 
 export class EditorConfig {
-    public static readonly version: string = "1.3.5"; // Currently using patch versions in display (unlike JB)
-    public static readonly versionDisplayName: string = "Slarmoo's Box " + EditorConfig.version;
+    public static readonly version: string = "1.0"; // Currently using patch versions in display (unlike JB)
+    public static readonly versionDisplayName: string = "Ouroboros";
 
     public static readonly releaseNotesURL: string = "./patch_notes.html";
 

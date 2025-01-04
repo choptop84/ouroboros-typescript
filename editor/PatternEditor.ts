@@ -39,7 +39,7 @@ export class PatternEditor {
     private readonly _svgNoteBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorNoteBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
     private readonly _svgDrumBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorDrumBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
     private readonly _svgModBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorModBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
-    private readonly _svgBackground: SVGRectElement = SVG.rect({ x: "0", y: "0", "pointer-events": "none", fill: "url(#patternEditorNoteBackground" + this._barOffset + ")" });
+    private readonly _svgBackground: SVGRectElement = SVG.rect({ id:"pitchEditorBackground", x: "0", y: "0", style:`opacity: ${getLocalStorageItem("customThemeImageOpacity", "1")};`, "pointer-events": "none", fill: "url(#patternEditorNoteBackground" + this._barOffset + ")" });
     private _svgNoteContainer: SVGSVGElement = SVG.svg();
     private readonly _svgPlayhead: SVGRectElement = SVG.rect({ x: "0", y: "0", width: "4", fill: ColorConfig.playhead, "pointer-events": "none" });
     private readonly _selectionRect: SVGRectElement = SVG.rect({ class: "dashed-line dash-move", fill: ColorConfig.boxSelectionFill, stroke: ColorConfig.hoverPreview, "stroke-width": 2, "stroke-dasharray": "5, 3", "fill-opacity": "0.4", "pointer-events": "none", visibility: "hidden" });
@@ -116,6 +116,12 @@ export class PatternEditor {
     private _renderedBeatWidth: number = -1;
     private _renderedPitchHeight: number = -1;
     private _renderedFifths: boolean = false;
+    private _renderedThirds: boolean = false;
+    private _renderedACS: boolean = false;
+    private _renderedPiano: boolean = false;
+
+    private _setKey: number = 12;
+
     private _renderedDrums: boolean = false;
     private _renderedMod: boolean = false;
     private _renderedRhythm: number = -1;
@@ -2393,10 +2399,143 @@ export class PatternEditor {
             this._updateSelection();
         }
 
-        if (this._renderedFifths != this._doc.prefs.showFifth) {
-            this._renderedFifths = this._doc.prefs.showFifth;
+        if (this._doc.prefs.advancedColorScheme == false) {
+
+            if (this._renderedFifths != this._doc.prefs.showFifth) {
+                this._renderedFifths = this._doc.prefs.showFifth;
+                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? ColorConfig.fifthNote : ColorConfig.pitchBackground);
+            }
+
+
+            if (this._renderedThirds != this._doc.prefs.showThird) {
+                this._renderedThirds = this._doc.prefs.showThird;
+                this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.showThird ? ColorConfig.thirdNote : ColorConfig.pitchBackground);
+            }
+
+            if (this._renderedPiano == true) {
+                this._renderedPiano = false;
+            }
+        if (this._renderedACS != this._doc.prefs.advancedColorScheme) {
+            this._backgroundPitchRows[0].setAttribute("fill", ColorConfig.tonic);
+            this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch1Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch2Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch3Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.thirdNote : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch5Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch6Background : ColorConfig.pitchBackground);
             this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? ColorConfig.fifthNote : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch8Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch9Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch10Background : ColorConfig.pitchBackground);
+            this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch11Background : ColorConfig.pitchBackground);
+            this._renderedACS = this._doc.prefs.advancedColorScheme;
+            console.log("this._renderedACS (acs disabled): "+this._renderedACS);
         }
+        this._setKey = -1;
+    } else {
+        if (ColorConfig.usesPianoScheme == false) {
+            if (this._renderedACS != this._doc.prefs.advancedColorScheme || this._renderedPiano == true) {
+                this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.tonic : ColorConfig.tonic);
+                this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch1Background :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch2Background :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch3Background :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.thirdNote :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch5Background :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch6Background :  ColorConfig.pitchBackground);
+                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? ColorConfig.fifthNote : ColorConfig.pitchBackground);
+                this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch8Background : ColorConfig.pitchBackground);
+                this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch9Background : ColorConfig.pitchBackground);
+                this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch10Background : ColorConfig.pitchBackground);
+                this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? ColorConfig.pitch11Background : ColorConfig.pitchBackground);
+                this._renderedACS = this._doc.prefs.advancedColorScheme;
+                console.log("this._renderedACS (acs enabled): "+this._renderedACS);
+            } 
+            if (this._renderedPiano == true) {
+                this._renderedPiano = false;
+                this._setKey = -1;
+                console.log("this._renderedACS (disabiling piano): "+this._renderedACS);
+            }
+        } else {
+            if (this._setKey != this._doc.song.key) {
+                    this._setKey = this._doc.song.key;
+                    this._renderedPiano = true;
+                    console.log("piano key"+this._setKey);
+                    if ( (this._setKey == 0 ) || (this._setKey == 2 ) || (this._setKey == 4 ) || (this._setKey == 6 ) || (this._setKey == 7 ) || (this._setKey == 9 ) || (this._setKey == 11 )) {
+                        this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--white-tonic, var(--pitch-white-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--black-tonic, var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 0 ) || (this._setKey == 1 ) || (this._setKey == 3 ) || (this._setKey == 5 )|| (this._setKey == 7 ) ||(this._setKey == 8 ) || (this._setKey == 10)) {
+                        this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 1 )||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 9 )||(this._setKey == 11)) {
+                        this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 0 ) ||(this._setKey == 2 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 10)) {
+                        this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 1) ||(this._setKey == 3 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 10 )||(this._setKey == 11)) {
+                        this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 0 )||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 11)) {
+                        this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 0 ) ||(this._setKey == 1 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 10)) {
+                        this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 1) ||(this._setKey == 2) ||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 11)) {
+                        if (this._doc.prefs.showFifth == true) {
+                            this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--white-fifth-note, var(--pitch-white-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
+                        } else {
+                            this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                        }
+                    } else {
+                        if (this._doc.prefs.showFifth == true) {
+                            this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--black-fifth-note, var(--pitch-black-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
+                        } else {
+                            this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                        }
+                    }
+                    if ((this._setKey == 0 ) || (this._setKey == 2 ) || (this._setKey == 3 ) || (this._setKey == 5) || (this._setKey == 7) || (this._setKey == 8) || (this._setKey == 10)) {
+                        this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 1 )|| (this._setKey ==3 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 9 )||(this._setKey == 11)) {
+                        this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                    if ((this._setKey == 0) ||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 9) ||(this._setKey == 10)) {
+                        this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+
+                    if ((this._setKey == 1 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 10 )||(this._setKey == 11)) {
+                        this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    } else {
+                        this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
+                    }
+                if (this._renderedACS != this._doc.prefs.advancedColorScheme) {
+                this._renderedACS = this._doc.prefs.advancedColorScheme;
+                console.log("this._renderedACS (in piano): "+this._renderedACS);
+                }
+            } 
+        }
+    }
 
         for (let j: number = 0; j < Config.pitchesPerOctave; j++) {
             let scale = this._doc.song.scale == Config.scales.dictionary["Custom"].index ? this._doc.song.scaleCustom : Config.scales[this._doc.song.scale].flags;
@@ -2492,7 +2631,11 @@ export class PatternEditor {
                     let colorSecondary: string = (disabled ? ColorConfig.disabledNoteSecondary : ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
                     notePath.setAttribute("fill", colorSecondary);
                     notePath.setAttribute("pointer-events", "none");
-                    notePath.setAttribute("class", "note-secondary"); // for theming
+                    if (this._doc.song.getChannelIsMod(this._doc.channel)) {
+                        notePath.setAttribute("class","mod-note-secondary");
+                    } else {
+                        notePath.setAttribute("class","note-secondary");
+                    }
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, false, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
                     notePath = SVG.path();
@@ -2500,9 +2643,13 @@ export class PatternEditor {
                     notePath.setAttribute("pointer-events", "none");
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, true, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
-                    notePath.setAttribute("class", "note-primary"); // for theming
-
-                    if (this._doc.prefs.notesFlashWhenPlayed && !disabled) {
+                    if (this._doc.song.getChannelIsMod(this._doc.channel)) {
+                        notePath.setAttribute("class","mod-note-primary");
+                    } else {
+                        notePath.setAttribute("class","note-primary");
+                    }
+ 
+                    if (this._doc.prefs.notesFlashWhenPlayed&&!disabled) {
                         notePath = SVG.path();
                         // const noteFlashColor = ColorConfig.getComputed("--note-flash") !== "" ? "var(--note-flash)" : "#ffffff";
                         notePath.setAttribute("fill", noteFlashColor);
@@ -2515,6 +2662,9 @@ export class PatternEditor {
                         notePath.setAttribute('note-end', String(
                             note.end
                         ));
+                        if (this._doc.song.getChannelIsMod(this._doc.channel)) { 
+                            notePath.setAttribute("class","mod-note-flash");
+                        }
                     }
 
                     let indicatorOffset: number = 2;
@@ -2587,39 +2737,119 @@ export class PatternEditor {
 
         const cap: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), pitch);
 
-        let pathString: string = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
-
-        for (let i: number = 1; i < pins.length; i++) {
-            let prevPin: NotePin = nextPin;
-            nextPin = pins[i];
-            let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
-            let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
-            let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-            let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-            let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-            let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-            pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-            if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-            if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-            pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-        }
-        for (let i: number = pins.length - 2; i >= 0; i--) {
-            let prevPin: NotePin = nextPin;
-            nextPin = pins[i];
-            let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
-            let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
-            let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-            let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-            let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-            let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-            pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-            if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-            if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-            pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-        }
-        pathString += "z";
-
-        svgElement.setAttribute("d", pathString);
+        let pathString: string = "";//"M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
+        if (window.localStorage.getItem("oldModNotes") != "true") {
+            if (this._doc.song.getChannelIsMod(this._doc.channel)) {
+    
+                let pathStringPart1 = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " ";
+                let pathStringPart2 = prettyNumber(this._pitchToPixelHeight(pitch+offset)+radius) + " ";
+    
+                pathString = pathStringPart1 + pathStringPart2;
+                for (let i: number = 1; i < pins.length; i++) { // These are the "top" dots, the ones that appear on the top of the SVG, after this process is complete it moves to the next for loop
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber((prevHeight+radius) - (radius*2) * prevSize) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber((prevHeight+radius) - (radius*2) * prevSize) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber((nextHeight+radius) - (radius*2) * nextSize) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber((nextHeight+radius)  - (radius*2) * nextSize) + " ";
+                }
+                for (let i: number = 0; i >= 0; i--) { // These are the "bottom" dots, these are the ones that appear on the bottom of the SVG, instead of going forward like the top one, it goes backwards to match the correct number of dots needed.
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch);
+                    /*
+                    let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;*/
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius) + " ";
+                    
+                }
+                pathString += "z"; 
+                
+            } else {
+                pathString = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
+            
+                for (let i: number = 1; i < pins.length; i++) {
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+                }
+                for (let i: number = pins.length - 2; i >= 0; i--) {
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+                }
+                pathString += "z";
+                }
+    
+                svgElement.setAttribute("d", pathString);
+            } else {
+                pathString = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
+                for (let i: number = 1; i < pins.length; i++) {
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+                }
+                for (let i: number = pins.length - 2; i >= 0; i--) {
+                    let prevPin: NotePin = nextPin;
+                    nextPin = pins[i];
+                    let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
+                    let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
+                    let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+                    let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+                    let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+                    let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+                    pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+                    if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+                    if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+                    pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+                }
+                pathString += "z";
+    
+                svgElement.setAttribute("d", pathString);
+                }
     }
 
     private _pitchToPixelHeight(pitch: number): number {
