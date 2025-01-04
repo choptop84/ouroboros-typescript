@@ -11,7 +11,6 @@ npx rollup build/synth/synth.js \
 	--output.name beepbox \
 	--context exports \
 	--sourcemap \
-	--plugin rollup-plugin-sourcemaps \
 	--plugin @rollup/plugin-node-resolve
 
 # Minify website/beepbox_synth.js into website/beepbox_synth.min.js
@@ -20,5 +19,6 @@ npx terser \
 	--source-map "content='website/beepbox_synth.js.map',url=beepbox_synth.min.js.map" \
 	-o website/beepbox_synth.min.js \
 	--compress \
+	--define OFFLINE=false \
 	--mangle \
 	--mangle-props regex="/^_.+/;"
