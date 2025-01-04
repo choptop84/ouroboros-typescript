@@ -3175,7 +3175,7 @@ export class Song {
     private static readonly _latestOuroborosVersion: number = 1;
     // One-character variant detection at the start of URL to distinguish variants such as JummBox, Or Goldbox. "j" and "g" respectively
 	//also "u" is ultrabox lol
-    private static readonly _variant = 0x6F; //"s" ~ slarmoo's box
+    private static readonly _variant = 0x6F; //"o" ~ Ouroboros
 
     public title: string;
     public scale: number;
@@ -4177,7 +4177,7 @@ export class Song {
         } else if(variantTest == 0x73){ //"s"
             fromSlarmoosBox = true
             charIndex++;
-        } else if(variantTest == 0x64){ //"o"
+        } else if(variantTest == 0x6F){ //"o"
             fromOuroboros = true
             charIndex++;
         }  else {
@@ -5709,11 +5709,11 @@ export class Song {
                             if(aa == 9) isTremolo2 = true;
                             aa = slarURL3toURL4Envelope[aa]; 
                         }
-                        const envelope: number = clamp(0, ((fromSlarmoosBox && !beforeThree || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
+                        const envelope: number = clamp(0, (((fromSlarmoosBox && !beforeThree)|| fromOuroboros || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
                         let pitchEnvelopeStart: number = 0;
                         let pitchEnvelopeEnd: number = Config.maxPitch;
                         let envelopeInverse: boolean = false;
-                        perEnvelopeSpeed = (fromSlarmoosBox && !beforeThree) ? Config.newEnvelopes[envelope].speed : perEnvelopeSpeed;
+                        perEnvelopeSpeed = ((fromSlarmoosBox && !beforeThree)||fromOuroboros) ? Config.newEnvelopes[envelope].speed : perEnvelopeSpeed;
                         let perEnvelopeLowerBound: number = 0;
                         let perEnvelopeUpperBound: number = 1;
                         let steps: number = 2;
