@@ -44,23 +44,20 @@ export const enum SustainType {
 }
 
 export const enum EnvelopeType {
+	noteSize,
     none,
-    noteSize,
-    pitch, //slarmoo's box 0.9
-    pseudorandom, //slarmoo's box 1.3
 	punch,
 	flare,
 	twang,
 	swell,
-	lfo,
+	tremolo,
 	tremolo2,
     decay,
     wibble,
-    //hard,
+    hard,
     linear,
     rise,
-    blip,
-    fall
+    blip
 }
 
 export const enum InstrumentType {
@@ -76,11 +73,10 @@ export const enum InstrumentType {
     customChipWave,
     mod,
 	fm6op,
-    additive,
     length,
 }
 
-export const TypePresets: ReadonlyArray<string> = ["chip", "FM", "noise", "spectrum", "drumset", "harmonics", "pulse width", "picked string", "supersaw", "chip (custom)", "mod", "FM (6-op)", "additive"];
+export const TypePresets: ReadonlyArray<string> = ["chip", "FM", "noise", "spectrum", "drumset", "harmonics", "pulse width", "picked string", "supersaw", "chip (custom)", "mod", "FM (6-op)"];
 
 export const enum DropdownID {
     Vibrato = 0,
@@ -91,7 +87,7 @@ export const enum DropdownID {
     PulseWidth = 5,
     Unison = 6,
     Envelope = 7,
-    EnvelopeSettings = 8,
+
 }
 
 export const enum EffectType {
@@ -107,9 +103,9 @@ export const enum EffectType {
     vibrato,
     transition,
     chord,
+    // If you add more, you'll also have to extend the bitfield used in Base64 which currently uses two six-bit characters.
     ringModulation,
     phaser,
-    noteRange,
     length,
 }
 
@@ -135,34 +131,6 @@ export const enum EnvelopeComputeIndex {
     phaserMix,
     phaserFeedback,
     phaserStages,
-    ringModulation,
-    ringModulationHz,
-    distortion,
-    bitcrusherQuantization,
-    bitcrusherFrequency,
-    chorus,
-    echoSustain,
-    reverb,
-    panning,
-    arpeggioSpeed,
-    //Add more here
-    length,
-}
-
-export const enum BaseWaveTypes {
-    sine,
-    square,
-    triangle,
-    sawtooth,
-    // ramp,
-    // trapezoid,
-    length,
-}
-
-export const enum RandomEnvelopeTypes {
-    time,
-    pitch,
-    // note,
     length,
 }
 
@@ -374,13 +342,6 @@ export async function startLoadingSample(url: string, chipWaveIndex: number, pre
     const chipWave = Config.chipWaves[chipWaveIndex];
     const rawChipWave = Config.rawChipWaves[chipWaveIndex];
     const rawRawChipWave = Config.rawRawChipWaves[chipWaveIndex];
-    if (OFFLINE) {
-        if (url.slice(0, 5) === "file:") {
-            const dirname = await getDirname();
-            const joined = await pathJoin(dirname, url.slice(5));
-            url = joined;
-        }
-    }
     fetch(url).then((response) => {
 	if (!response.ok) {
 	    // @TODO: Be specific with the error handling.
@@ -436,9 +397,6 @@ export function getLocalStorageItem<T>(key: string, defaultValue: T): T | string
 // @HACK: This just assumes these exist, regardless of whether they actually do
 // or not.
 declare global {
-    const OFFLINE: boolean; // for UB offline
-    const getDirname: () => Promise<string>; // for UB offline
-    const pathJoin: (...parts: string[]) => Promise<string>; // for UB offline
     const kicksample: number[];
     const snaresample: number[];
     const pianosample: number[];
@@ -881,7 +839,7 @@ export class Config {
 
     public static willReloadForCustomSamples: boolean = false;
 
-    public static jsonFormat: string = "ouroboros";
+    public static jsonFormat: string = "UltraBox";
     // public static thurmboxImportUrl: string = "https://file.garden/ZMQ0Om5nmTe-x2hq/PandoraArchive%20Samples/";
 
     public static readonly scales: DictionaryArray<Scale> = toNameMap([
@@ -997,7 +955,6 @@ export class Config {
     public static readonly pwmBaseExpression: number = 0.04725; // It's actually closer to half of this, the synthesized pulse amplitude range is only .5 to -.5, but also note that the fundamental sine partial amplitude of a square wave is 4/π times the measured square wave amplitude.
     public static readonly supersawBaseExpression:  number = 0.061425; // It's actually closer to half of this, the synthesized sawtooth amplitude range is only .5 to -.5.
     public static readonly pickedStringBaseExpression: number = 0.025; // Same as harmonics.
-    public static readonly additiveBaseExpression: number = 0.012; //For now. We'll see how is goes
     public static readonly distortionBaseVolume: number = 0.011; // Distortion is not affected by pitchDamping, which otherwise approximately halves expression for notes around the middle of the range.
     public static readonly bitcrusherBaseVolume: number = 0.010; // Also not affected by pitchDamping, used when bit crushing is maxed out (aka "1-bit" output).
 	public static rawChipWaves: DictionaryArray<ChipWave> = toNameMap([
@@ -1072,6 +1029,7 @@ export class Config {
 	{ name: "nerdbox unnamed 2", expression: 0.5, samples: centerAndNormalizeWave([2.0 , 5.0 / 55.0 , -9.0 , 6.5 / 6.5 , -55.0, 18.5 / -26.0]) },
 //nerdbox
 	 { name: "zefbox semi-square", expression: 1.0, samples: centerAndNormalizeWave([1.0, 1.5, 2.0, 2.5, 2.5, 2.5, 2.0, 1.5, 1.0]) },
+	{ name: "zefbox deep square", expression: 1.0, samples: centerAndNormalizeWave([1.0, 2.25, 1.0, -1.0, -2.25, -1.0]) },
  { name: "zefbox squaretal", expression: 0.7, samples: centerAndNormalizeWave([1.5, 1.0, 1.5, -1.5, -1.0, -1.5]) },
 //	{ name: "zefbox sawtooth", expression: 0.65, samples: centerAndNormalizeWave([1.0 / 31.0, 3.0 / 31.0, 5.0 / 31.0, 7.0 / 31.0, 9.0 / 31.0, 11.0 / 31.0, 13.0 / 31.0, 15.0 / 31.0, 17.0 / 31.0, 19.0 / 31.0, 21.0 / 31.0, 23.0 / 31.0, 25.0 / 31.0, 27.0 / 31.0, 29.0 / 31.0, 31.0 / 31.0, -31.0 / 31.0, -29.0 / 31.0, -27.0 / 31.0, -25.0 / 31.0, -23.0 / 31.0, -21.0 / 31.0, -19.0 / 31.0, -17.0 / 31.0, -15.0 / 31.0, -13.0 / 31.0, -11.0 / 31.0, -9.0 / 31.0, -7.0 / 31.0, -5.0 / 31.0, -3.0 / 31.0, -1.0 / 31.0]) },
 	 { name: "zefbox saw wide", expression: 0.65, samples: centerAndNormalizeWave([0.0, -0.4, -0.8, -1.2, -1.6 , -2.0, 0.0, -0.4, -0.8, -1.2, -1.6]) },
@@ -1230,8 +1188,8 @@ export class Config {
 		
 	 //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
 	]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "ring modulation", "phaser", "note range", "additive"];;
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb, EffectType.ringModulation, EffectType.phaser, EffectType.noteRange];
+    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "ring modulation", "phaser"];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb, EffectType.ringModulation, EffectType.phaser];
     public static readonly noteSizeMax: number = 6;
 	public static readonly volumeRange: number = 50;
 	// Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,
@@ -1243,9 +1201,6 @@ export class Config {
     public static readonly chorusRange: number = 8;
     public static readonly ringModRange: number = 8;
     public static readonly ringModHzRange: number = 64;
-    public static readonly rmHzOffsetCenter: number = 200;
-    public static readonly rmHzOffsetMax: number = 400;
-    public static readonly rmHzOffsetMin: number = 0;
     public static readonly chorusPeriodSeconds: number = 2.0;
     public static readonly chorusDelayRange: number = 0.0034;
     public static readonly chorusDelayOffsets: ReadonlyArray<ReadonlyArray<number>> = [[1.51, 2.10, 3.35], [1.47, 2.15, 3.25]];
@@ -1359,11 +1314,8 @@ export class Config {
 		{ name: "25×", mult: 25.0, hzOffset: 0.0, amplitudeSign: 1.0 },
 	{ name: "50×", mult: 50.0, hzOffset: 0.0, amplitudeSign: 1.0 },
 	{ name: "75×", mult: 75.0, hzOffset: 0.0, amplitudeSign: 1.0 },
-	{ name: "100×", mult: 100.0, hzOffset: 0.0, amplitudeSign: 1.0 },
+	{ name: "100×", mult: 100.0, hzOffset: 0.0, amplitudeSign: 1.0 }
 	    //50 and 100 are from dogebox
-    //128 and 256 from slarmoo's box
-    { name: "128x", mult: 128.0, hzOffset: 0.0, amplitudeSign: 1.0 },
-    { name: "256x", mult: 250.0, hzOffset: 0.0, amplitudeSign: 1.0},
     ]);
 
     public static readonly envelopes: DictionaryArray<Envelope> = toNameMap([
@@ -1382,10 +1334,10 @@ export class Config {
         { name: "swell 1", type: EnvelopeType.swell, speed: 32.0 },
         { name: "swell 2", type: EnvelopeType.swell, speed: 8.0 },
         { name: "swell 3", type: EnvelopeType.swell, speed: 2.0 },
-        { name: "tremolo0", type: EnvelopeType.lfo, speed: 8.0 },
-        { name: "tremolo1", type: EnvelopeType.lfo, speed: 4.0 },
-        { name: "tremolo2", type: EnvelopeType.lfo, speed: 2.0 },
-        { name: "tremolo3", type: EnvelopeType.lfo, speed: 1.0 },
+        { name: "tremolo0", type: EnvelopeType.tremolo, speed: 8.0 },
+        { name: "tremolo1", type: EnvelopeType.tremolo, speed: 4.0 },
+        { name: "tremolo2", type: EnvelopeType.tremolo, speed: 2.0 },
+        { name: "tremolo3", type: EnvelopeType.tremolo, speed: 1.0 },
         { name: "tremolo4", type: EnvelopeType.tremolo2, speed: 4.0 },
         { name: "tremolo5", type: EnvelopeType.tremolo2, speed: 2.0 },
         { name: "tremolo6", type: EnvelopeType.tremolo2, speed: 1.0 },
@@ -1393,7 +1345,7 @@ export class Config {
         { name: "decay 1", type: EnvelopeType.decay, speed: 10.0 },
         { name: "decay 2", type: EnvelopeType.decay, speed: 7.0 },
         { name: "decay 3", type: EnvelopeType.decay, speed: 4.0 },
-        { name: "wibble-1", type: EnvelopeType.wibble, speed: 128.0 },
+        { name: "wibble-1", type: EnvelopeType.wibble, speed: 96.0 },
         { name: "wibble 1", type: EnvelopeType.wibble, speed: 24.0 },
         { name: "wibble 2", type: EnvelopeType.wibble, speed: 12.0 },
         { name: "wibble 3", type: EnvelopeType.wibble, speed: 4.0 },
@@ -1408,55 +1360,31 @@ export class Config {
         { name: "rise 2", type: EnvelopeType.rise, speed: 8.0 },
         { name: "rise 3", type: EnvelopeType.rise, speed: 2.0 },
 	    		//modbox
-        { name: "flute 1", type: EnvelopeType.wibble, speed: 16.0 },
-		{ name: "flute 2", type: EnvelopeType.wibble, speed: 8.0 },
-		{ name: "flute 3", type: EnvelopeType.wibble, speed: 4.0 },
+        { name: "flute 1", type: 9, speed: 16.0 },
+		{ name: "flute 2", type: 9, speed: 8.0 },
+		{ name: "flute 3", type: 9, speed: 4.0 },
         // sandbox
-		{ name: "tripolo1", type: EnvelopeType.lfo, speed: 9.0 },
-        { name: "tripolo2", type: EnvelopeType.lfo, speed: 6.0 },
-        { name: "tripolo3", type: EnvelopeType.lfo, speed: 3.0 },
-        { name: "tripolo4", type: EnvelopeType.tremolo2, speed: 9.0 },
-        { name: "tripolo5", type: EnvelopeType.tremolo2, speed: 6.0 },
-        { name: "tripolo6", type: EnvelopeType.tremolo2, speed: 3.0 },
-        { name: "pentolo1", type: EnvelopeType.lfo, speed: 10.0 },
-        { name: "pentolo2", type: EnvelopeType.lfo, speed: 5.0 },
-        { name: "pentolo3", type: EnvelopeType.lfo, speed: 2.5 },
-        { name: "pentolo4", type: EnvelopeType.tremolo2, speed: 10.0 },
-        { name: "pentolo5", type: EnvelopeType.tremolo2, speed: 5.0 },
-        { name: "pentolo6", type: EnvelopeType.tremolo2, speed: 2.5 },	
+		{ name: "tripolo1", type: 6, speed: 9.0 },
+        { name: "tripolo2", type: 6, speed: 6.0 },
+        { name: "tripolo3", type: 6, speed: 3.0 },
+        { name: "tripolo4", type: 7, speed: 9.0 },
+        { name: "tripolo5", type: 7, speed: 6.0 },
+        { name: "tripolo6", type: 7, speed: 3.0 },
+        { name: "pentolo1", type: 6, speed: 10.0 },
+        { name: "pentolo2", type: 6, speed: 5.0 },
+        { name: "pentolo3", type: 6, speed: 2.5 },
+        { name: "pentolo4", type: 7, speed: 10.0 },
+        { name: "pentolo5", type: 7, speed: 5.0 },
+        { name: "pentolo6", type: 7, speed: 2.5 },	
         // todbox
-	    { name: "flutter 1", type: EnvelopeType.lfo, speed: 14.0 },
-        { name: "flutter 2", type: EnvelopeType.tremolo2, speed: 11.0 },
-        { name: "water-y flutter", type: EnvelopeType.lfo, speed: 9.0 },
+	    { name: "flutter 1", type: 6, speed: 14.0 },
+        { name: "flutter 2", type: 7, speed: 11.0 },
+        { name: "water-y flutter", type: 6, speed: 9.0 },
 	    // new jummbox
         { name: "blip 1", type: EnvelopeType.blip, speed: 6.0 },
         { name: "blip 2", type: EnvelopeType.blip, speed: 16.0 },
         { name: "blip 3", type: EnvelopeType.blip, speed: 32.0 },
-        // Slarmoo's Box
-        { name: "fall 1", type: EnvelopeType.fall, speed: 8.0 },
-        { name: "fall 2", type: EnvelopeType.fall, speed: 4.0 },
-        { name: "fall 3", type: EnvelopeType.fall, speed: 2.0 },
     ]);
-
-    public static readonly newEnvelopes: DictionaryArray<Envelope> = toNameMap([
-        { name: "none", type: EnvelopeType.none, speed: 0.0 },
-        { name: "note size", type: EnvelopeType.noteSize, speed: 0.0 },
-        { name: "pitch", type: EnvelopeType.pitch, speed: 0.0 }, 
-        { name: "random", type: EnvelopeType.pseudorandom, speed: 4.0 }, //Slarmoo's box 1.3
-        { name: "punch", type: EnvelopeType.punch, speed: 0.0 },
-        { name: "flare", type: EnvelopeType.flare, speed: 32.0 },
-        { name: "twang", type: EnvelopeType.twang, speed: 32.0 },
-        { name: "swell", type: EnvelopeType.swell, speed: 32.0 },
-        { name: "lfo", type: EnvelopeType.lfo, speed: 4.0 }, //replaced tremolo and tremolo2
-        // { name: "tremolo2", type: EnvelopeType.tremolo2, speed: 4.0 }, //removed Slarmoo's Box 1.3
-        { name: "decay", type: EnvelopeType.decay, speed: 10.0 },
-        { name: "wibble", type: EnvelopeType.wibble, speed: 24.0 },
-        { name: "linear", type: EnvelopeType.linear, speed: 32.0 },
-        { name: "rise", type: EnvelopeType.rise, speed: 32.0 },
-        { name: "blip", type: EnvelopeType.blip, speed: 6.0 },
-        { name: "fall", type: EnvelopeType.fall, speed: 2.0 }, 
-    ])
-
 	public static readonly feedbacks: DictionaryArray<Feedback> = toNameMap([
 		{ name: "1⟲", indices: [[1], [], [], []] },
 		{ name: "2⟲", indices: [[], [2], [], []] },
@@ -1532,12 +1460,7 @@ export class Config {
     public static readonly harmonicsControlPointBits: number = 3;
     public static readonly harmonicsMax: number = (1 << Config.harmonicsControlPointBits) - 1;
     public static readonly harmonicsWavelength: number = 1 << 11; // 2048
-    public static readonly additiveControlPoints: number = 28;
-    public static readonly additiveRendered: number = 64;
-    public static readonly additiveControlPointBits: number = 3;
-    public static readonly additiveMax: number = (1 << Config.additiveControlPointBits) - 1;
-    public static readonly additiveWavelength: number = 1 << 11; // 2048
-    public static readonly pulseWidthRange: number = 100;
+    public static readonly pulseWidthRange: number = 50;
     public static readonly pulseWidthStepPower: number = 0.5;
     public static readonly supersawVoiceCount: number = 7;
 	public static readonly supersawDynamismMax: number = 6;
@@ -1546,9 +1469,9 @@ export class Config {
     public static readonly pitchChannelCountMin: number = 1;
     public static readonly pitchChannelCountMax: number = 60;
     public static readonly noiseChannelCountMin: number = 0;
-    public static readonly noiseChannelCountMax: number = 60;
+    public static readonly noiseChannelCountMax: number = 32;
     public static readonly modChannelCountMin: number = 0;
-    public static readonly modChannelCountMax: number = 60;
+    public static readonly modChannelCountMax: number = 24;
     public static readonly noiseInterval: number = 6;
     public static readonly pitchesPerOctave: number = 12; // TODO: Use this for converting pitch to frequency.
     public static readonly drumCount: number = 12;
@@ -1578,78 +1501,6 @@ export class Config {
     public static readonly sineWaveMask: number = Config.sineWaveLength - 1;
     public static readonly sineWave: Float32Array = generateSineWave();
 
-    public static readonly perEnvelopeSpeedIndices: number[] = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.25, 0.3, 0.3333, 0.4, 0.5, 0.6, 0.6667, 0.7, 0.75, 0.8, 0.9, 1, 1.25, 1.3333, 1.5, 1.6667, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 32, 40, 64, 128, 256];
-    public static readonly perEnvelopeSpeedToIndices: Dictionary<number> = {
-        0: 0,
-        0.01: 1,
-        0.02: 2,
-        0.03: 3,
-        0.04: 4,
-        0.05: 5,
-        0.06: 6,
-        0.07: 7,
-        0.08: 8,
-        0.09: 9,
-        0.1: 10,
-        0.2: 11,
-        0.25: 12,
-        0.3: 13,
-        0.3333: 14,
-        0.4: 15,
-        0.5: 16,
-        0.6: 17,
-        0.6667: 18,
-        0.7: 19,
-        0.75: 20,
-        0.8: 21,
-        0.9: 22,
-        1: 23,
-        1.25: 24,
-        1.3333: 25,
-        1.5: 26,
-        1.6667: 27,
-        1.75: 28,
-        2: 29,
-        2.25: 30,
-        2.5: 31,
-        2.75: 32,
-        3: 33,
-        3.5: 34,
-        4: 35,
-        4.5: 36,
-        5: 37,
-        5.5: 38,
-        6: 39,
-        6.5: 40,
-        7: 41,
-        7.5: 42,
-        8: 43,
-        8.5: 44,
-        9: 45,
-        9.5: 46,
-        10: 47,
-        11: 48,
-        12: 49,
-        13: 50,
-        14: 51,
-        15: 52,
-        16: 53,
-        17: 54,
-        18: 55,
-        19: 56,
-        20: 57,
-        24: 58,
-        32: 59,
-        40: 60,
-        64: 61,
-        128: 62,
-        256: 63,
-    }
-
-    public static readonly perEnvelopeBoundMin: number = 0;
-    public static readonly perEnvelopeBoundMax: number = 2;
-    //public static readonly randomEnvelopeTypes: string[] = ["time", "pitch"];
-
     // Picked strings have an all-pass filter with a corner frequency based on the tone fundamental frequency, in order to add a slight inharmonicity. (Which is important for distortion.)
     public static readonly pickedStringDispersionCenterFreq: number = 6000.0; // The tone fundamental freq is pulled toward this freq for computing the all-pass corner freq.
     public static readonly pickedStringDispersionFreqScale: number = 0.3; // The tone fundamental freq freq moves this much toward the center freq for computing the all-pass corner freq.
@@ -1666,46 +1517,44 @@ export class Config {
     public static readonly bitcrusherOctaveStep: number = 0.5;
     public static readonly bitcrusherQuantizationRange: number = 8;
 
-    public static readonly maxEnvelopeCount: number = 16;
+    public static readonly maxEnvelopeCount: number = 12;
     public static readonly defaultAutomationRange: number = 13;
     public static readonly instrumentAutomationTargets: DictionaryArray<AutomationTarget> = toNameMap([
-        { name: "none",                   computeIndex: null,                                           displayName: "none",                interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: null },
-        { name: "noteVolume",             computeIndex: EnvelopeComputeIndex.noteVolume,                displayName: "note volume",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: null },
-        { name: "pulseWidth",             computeIndex: EnvelopeComputeIndex.pulseWidth,                displayName: "pulse width",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
-        { name: "stringSustain",          computeIndex: EnvelopeComputeIndex.stringSustain,             displayName: "sustain",             interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.pickedString] },
-        { name: "unison",                 computeIndex: EnvelopeComputeIndex.unison,                    displayName: "unison",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum] },
-        { name: "operatorFrequency",      computeIndex: EnvelopeComputeIndex.operatorFrequency0,        displayName: "fm# freq",            interleave: true,   isFilter: false,    maxCount: Config.operatorCount+2,   effect: null,                       compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "operatorAmplitude",      computeIndex: EnvelopeComputeIndex.operatorAmplitude0,        displayName: "fm# volume",          interleave: false,  isFilter: false,    maxCount: Config.operatorCount+2,   effect: null,                       compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "feedbackAmplitude",      computeIndex: EnvelopeComputeIndex.feedbackAmplitude,         displayName: "fm feedback",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
-        { name: "pitchShift",             computeIndex: EnvelopeComputeIndex.pitchShift,                displayName: "pitch shift",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.pitchShift,      compatibleInstruments: null },
-        { name: "detune",                 computeIndex: EnvelopeComputeIndex.detune,                    displayName: "detune",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.detune,          compatibleInstruments: null },
-        { name: "vibratoDepth",           computeIndex: EnvelopeComputeIndex.vibratoDepth,              displayName: "vibrato range",       interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.vibrato,         compatibleInstruments: null },
-        { name: "noteFilterAllFreqs",     computeIndex: EnvelopeComputeIndex.noteFilterAllFreqs,        displayName: "n. filter freqs",     interleave: false,  isFilter: true,     maxCount: 1,                        effect: EffectType.noteFilter,      compatibleInstruments: null },
-        { name: "noteFilterFreq",         computeIndex: EnvelopeComputeIndex.noteFilterFreq0,           displayName: "n. filter # freq",    interleave: false,  isFilter: true,     maxCount: Config.filterMaxPoints,   effect: EffectType.noteFilter,      compatibleInstruments: null },
-        { name: "decimalOffset",          computeIndex: EnvelopeComputeIndex.decimalOffset,             displayName: "decimal offset",      interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
-        { name: "supersawDynamism",       computeIndex: EnvelopeComputeIndex.supersawDynamism,          displayName: "dynamism",            interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.supersaw]},
-		{ name: "supersawSpread",         computeIndex: EnvelopeComputeIndex.supersawSpread,            displayName: "spread",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.supersaw]},
-		{ name: "supersawShape",          computeIndex: EnvelopeComputeIndex.supersawShape,             displayName: "saw↔pulse",           interleave: false,  isFilter: false,    maxCount: 1,                        effect: null,                       compatibleInstruments: [InstrumentType.supersaw]},    
-        { name: "phaserFreq",             computeIndex: EnvelopeComputeIndex.phaserFreq,                displayName: "phaser freq",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.phaser,          compatibleInstruments: null },
-        { name: "phaserMix",              computeIndex: EnvelopeComputeIndex.phaserMix,                 displayName: "phaser",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.phaser,          compatibleInstruments: null },
-        { name: "phaserFeedback",         computeIndex: EnvelopeComputeIndex.phaserFeedback,            displayName: "phaser feedback",     interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.phaser,          compatibleInstruments: null },
-        { name: "phaserStages",           computeIndex: EnvelopeComputeIndex.phaserStages,              displayName: "phaser stages",       interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.phaser,          compatibleInstruments: null },
-        { name: "ringModulation",         computeIndex: EnvelopeComputeIndex.ringModulation,            displayName: "ring mod",            interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.ringModulation,  compatibleInstruments: null },
-        { name: "ringModulationHz",       computeIndex: EnvelopeComputeIndex.ringModulationHz,          displayName: "ring mod hz",         interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.ringModulation,  compatibleInstruments: null },
-        { name: "distortion",             computeIndex: EnvelopeComputeIndex.distortion,                displayName: "distortion",          interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.distortion,      compatibleInstruments: null },
-        { name: "bitcrusherQuantization", computeIndex: EnvelopeComputeIndex.bitcrusherQuantization,    displayName: "bitcrush",            interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.bitcrusher,      compatibleInstruments: null},
-        { name: "bitcrusherFrequency",    computeIndex: EnvelopeComputeIndex.bitcrusherFrequency,       displayName: "freq crush",          interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.bitcrusher,      compatibleInstruments: null},
-        { name: "chorus",                 computeIndex: EnvelopeComputeIndex.chorus,                    displayName: "chorus",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.chorus,          compatibleInstruments: null},
-        { name: "echoSustain",            computeIndex: EnvelopeComputeIndex.echoSustain,               displayName: "echo sustain",        interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.echo,            compatibleInstruments: null},
-        { name: "reverb",                 computeIndex: EnvelopeComputeIndex.reverb,                    displayName: "reverb",              interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.reverb,          compatibleInstruments: null},
-        { name: "panning",                computeIndex: EnvelopeComputeIndex.panning,                   displayName: "panning",             interleave: false,  isFilter: false,    maxCount: 1,                        effect: EffectType.panning,         compatibleInstruments: null},
+        { name: "none", computeIndex: null, displayName: "none",             /*perNote: false,*/ interleave: false, isFilter: false, /*range: 0,                              */    maxCount: 1, effect: null, compatibleInstruments: null },
+        { name: "noteVolume", computeIndex: EnvelopeComputeIndex.noteVolume, displayName: "note volume",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.volumeRange,             */    maxCount: 1, effect: null, compatibleInstruments: null },
+        { name: "pulseWidth", computeIndex: EnvelopeComputeIndex.pulseWidth, displayName: "pulse width",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pulseWidthRange,         */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
+        { name: "stringSustain", computeIndex: EnvelopeComputeIndex.stringSustain, displayName: "sustain",          /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.stringSustainRange,      */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.pickedString] },
+        { name: "unison", computeIndex: EnvelopeComputeIndex.unison, displayName: "unison",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.chip, InstrumentType.harmonics, InstrumentType.pickedString, InstrumentType.customChipWave, InstrumentType.pwm, InstrumentType.noise, InstrumentType.spectrum] },
+        { name: "operatorFrequency", computeIndex: EnvelopeComputeIndex.operatorFrequency0, displayName: "fm# freq",         /*perNote:  true,*/ interleave: true, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: Config.operatorCount+2, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
+        { name: "operatorAmplitude", computeIndex: EnvelopeComputeIndex.operatorAmplitude0, displayName: "fm# volume",       /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: Config.operatorCount+2, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
+        { name: "feedbackAmplitude", computeIndex: EnvelopeComputeIndex.feedbackAmplitude, displayName: "fm feedback",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.operatorAmplitudeMax + 1,*/    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.fm, InstrumentType.fm6op] },
+        { name: "pitchShift", computeIndex: EnvelopeComputeIndex.pitchShift, displayName: "pitch shift",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pitchShiftRange,         */    maxCount: 1, effect: EffectType.pitchShift, compatibleInstruments: null },
+        { name: "detune", computeIndex: EnvelopeComputeIndex.detune, displayName: "detune",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.detuneMax + 1,           */    maxCount: 1, effect: EffectType.detune, compatibleInstruments: null },
+        { name: "vibratoDepth", computeIndex: EnvelopeComputeIndex.vibratoDepth, displayName: "vibrato range",    /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.defaultAutomationRange,  */    maxCount: 1, effect: EffectType.vibrato, compatibleInstruments: null },
+        { name: "noteFilterAllFreqs", computeIndex: EnvelopeComputeIndex.noteFilterAllFreqs, displayName: "n. filter freqs",  /*perNote:  true,*/ interleave: false, isFilter: true, /*range: null,                           */    maxCount: 1, effect: EffectType.noteFilter, compatibleInstruments: null },
+        { name: "noteFilterFreq", computeIndex: EnvelopeComputeIndex.noteFilterFreq0, displayName: "n. filter # freq", /*perNote:  true,*/ interleave: false/*true*/, isFilter: true, /*range: Config.filterFreqRange,     */        maxCount: Config.filterMaxPoints, effect: EffectType.noteFilter, compatibleInstruments: null },
+        { name: "decimalOffset", computeIndex: EnvelopeComputeIndex.decimalOffset, displayName: "decimal offset",      /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.pulseWidthRange,         */    maxCount: 1, effect: null, compatibleInstruments: [InstrumentType.pwm, InstrumentType.supersaw] },
+        { name: "supersawDynamism",       computeIndex:       EnvelopeComputeIndex.supersawDynamism,       displayName: "dynamism",         /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawDynamismMax + 1, */    maxCount: 1,    effect: null,                    compatibleInstruments: [InstrumentType.supersaw]},
+		{ name: "supersawSpread",         computeIndex:       EnvelopeComputeIndex.supersawSpread,         displayName: "spread",           /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawSpreadMax + 1,   */    maxCount: 1,    effect: null,                    compatibleInstruments: [InstrumentType.supersaw]},
+		{ name: "supersawShape",          computeIndex:       EnvelopeComputeIndex.supersawShape,          displayName: "saw↔pulse",        /*perNote:  true,*/ interleave: false, isFilter: false, /*range: Config.supersawShapeMax + 1,    */    maxCount: 1,    effect: null,                    compatibleInstruments: [InstrumentType.supersaw]},    
+        { name: "phaserFreq",                 computeIndex: EnvelopeComputeIndex.phaserFreq,                 displayName: "phaser freq",            interleave: false, isFilter: false, maxCount: 1,                       effect: EffectType.phaser,     compatibleInstruments: null },
+        { name: "phaserMix",                 computeIndex: EnvelopeComputeIndex.phaserMix,                 displayName: "phaser",            interleave: false, isFilter: false, maxCount: 1,                       effect: EffectType.phaser,     compatibleInstruments: null },
+        { name: "phaserFeedback",                 computeIndex: EnvelopeComputeIndex.phaserFeedback,                 displayName: "phaser feedback",            interleave: false, isFilter: false, maxCount: 1,                       effect: EffectType.phaser,     compatibleInstruments: null },
+        { name: "phaserStages",                 computeIndex: EnvelopeComputeIndex.phaserStages,                 displayName: "phaser stages",            interleave: false, isFilter: false, maxCount: 1,                       effect: EffectType.phaser,     compatibleInstruments: null },
         // Controlling filter gain is less obvious and intuitive than controlling filter freq, so to avoid confusion I've disabled it for now...
         //{name: "noteFilterGain",         computeIndex:       EnvelopeComputeIndex.noteFilterGain0,        displayName: "n. filter # vol",  /*perNote:  true,*/ interleave: false, isFilter:  true, range: Config.filterGainRange,             maxCount: Config.filterMaxPoints, effect: EffectType.noteFilter, compatibleInstruments: null},
         /*
+        {name: "distortion",             computeIndex: InstrumentAutomationIndex.distortion,             displayName: "distortion",       perNote: false, interleave: false, isFilter: false, range: Config.distortionRange,             maxCount: 1,    effect: EffectType.distortion,   compatibleInstruments: null},
+        {name: "bitcrusherQuantization", computeIndex: InstrumentAutomationIndex.bitcrusherQuantization, displayName: "bit crush",        perNote: false, interleave: false, isFilter: false, range: Config.bitcrusherQuantizationRange, maxCount: 1,    effect: EffectType.bitcrusher,   compatibleInstruments: null},
+        {name: "bitcrusherFrequency",    computeIndex: InstrumentAutomationIndex.bitcrusherFrequency,    displayName: "freq crush",       perNote: false, interleave: false, isFilter: false, range: Config.bitcrusherFreqRange,         maxCount: 1,    effect: EffectType.bitcrusher,   compatibleInstruments: null},
         {name: "eqFilterAllFreqs",       computeIndex: InstrumentAutomationIndex.eqFilterAllFreqs,       displayName: "eq filter freqs",  perNote: false, interleave: false, isFilter:  true, range: null,                               maxCount: 1,    effect: null,                    compatibleInstruments: null},
         {name: "eqFilterFreq",           computeIndex: InstrumentAutomationIndex.eqFilterFreq0,          displayName: "eq filter # freq", perNote: false, interleave:  true, isFilter:  true, range: Config.filterFreqRange,             maxCount: Config.filterMaxPoints, effect: null,  compatibleInstruments: null},
         {name: "eqFilterGain",           computeIndex: InstrumentAutomationIndex.eqFilterGain0,          displayName: "eq filter # vol",  perNote: false, interleave: false, isFilter:  true, range: Config.filterGainRange,             maxCount: Config.filterMaxPoints, effect: null,  compatibleInstruments: null},
+        {name: "panning",                computeIndex: InstrumentAutomationIndex.panning,                displayName: "panning",          perNote: false, interleave: false, isFilter: false, range: Config.panMax + 1,                  maxCount: 1,    effect: EffectType.panning,      compatibleInstruments: null},
+        {name: "chorus",                 computeIndex: InstrumentAutomationIndex.chorus,                 displayName: "chorus",           perNote: false, interleave: false, isFilter: false, range: Config.chorusRange,                 maxCount: 1,    effect: EffectType.chorus,       compatibleInstruments: null},
+        {name: "echoSustain",            computeIndex: InstrumentAutomationIndex.echoSustain,            displayName: "echo",             perNote: false, interleave: false, isFilter: false, range: Config.echoSustainRange,            maxCount: 1,    effect: EffectType.echo,         compatibleInstruments: null},
         {name: "echoDelay",              computeIndex: InstrumentAutomationIndex.echoDelay,              displayName: "echo delay",       perNote: false, interleave: false, isFilter: false, range: Config.echoDelayRange,              maxCount: 1,    effect: EffectType.echo,         compatibleInstruments: null}, // wait until after we're computing a tick's settings for multiple run lengths.
+        {name: "reverb",                 computeIndex: InstrumentAutomationIndex.reverb,                 displayName: "reverb",           perNote: false, interleave: false, isFilter: false, range: Config.reverbRange,                 maxCount: 1,    effect: EffectType.reverb,       compatibleInstruments: null},
         {name: "mixVolume",              computeIndex: InstrumentAutomationIndex.mixVolume,              displayName: "mix volume",       perNote: false, interleave: false, isFilter: false, range: Config.volumeRange,                 maxCount: 1,    effect: null,                    compatibleInstruments: null},
         {name: "envelope#",              computeIndex: null,                                             displayName: "envelope",         perNote: false, interleave: false, isFilter: false, range: Config.defaultAutomationRange,      maxCount: Config.maxEnvelopeCount, effect: null, compatibleInstruments: null}, // maxCount special case for envelopes to be allowed to target earlier ones.
         */
@@ -1717,7 +1566,7 @@ export class Config {
 		{ name: "sawtooth", samples: generateSawWave() },
 		{ name: "ramp", samples: generateSawWave(true) },
 		{ name: "trapezoid", samples: generateTrapezoidWave(2) },
-	    { name: "quasi-sine", samples: generateQuasiSineWave() },
+	    { name: "rounded", samples: generateRoundedSineWave() },
 		//{ name: "white noise", samples: generateWhiteNoiseFmWave() },
 		//{ name: "1-bit white noise", samples: generateOneBitWhiteNoiseFmWave() },
     ]);
@@ -1830,7 +1679,7 @@ export class Config {
             pianoName: "Detune", 
             maxRawVol: Config.songDetuneMax - Config.songDetuneMin, newNoteVol: Math.ceil((Config.songDetuneMax - Config.songDetuneMin) / 2), forSong: true, convertRealFactor: -250, associatedEffect: EffectType.length,
             promptName: "Song Detune", 
-            promptDesc: ["This setting controls the overall detune of the entire song. There is no associated slider.", "At $MID, your song will have no extra detune applied and sound unchanged from default. Each tick corresponds to four cents, or four hundredths of a pitch. Thus, each change of 25 ticks corresponds to one half-step of detune, up to 10 half-steps up at $HI, or 10 half-steps down at $LO.", "[ADDITIVE] [$LO - $HI] [cents x4]"] },
+            promptDesc: ["This setting controls the overall detune of the entire song. There is no associated slider.", "At $MID, your song will have no extra detune applied and sound unchanged from default. Each tick corresponds to four cents, or four hundredths of a pitch. Thus, each change of 25 ticks corresponds to one half-step of detune, up to 10 half-steps up at $HI, or 10 half-steps down at $LO.", "[MULTIPLICATIVE] [$LO - $HI] [cents x4]"] },
         { name: "vibrato speed", 
             pianoName: "Vibrato Speed", 
             maxRawVol: 30, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.vibrato,
@@ -2024,22 +1873,6 @@ export class Config {
             maxRawVol: Config.phaserMaxStages, newNoteVol: 0, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.phaser,
             promptName: "Phaser Stages", 
             promptDesc: [ "This setting controls the number of phaser stages in your insturment, just like the phaser stages slider.", "At $LO, your instrument will have no phaser stages. At $HI, it will be at maximum.", "[OVERWRITING] [$LO - $HI]"] },                       
-        { name: "song pitch shift", 
-            pianoName: "Song Pitch Shift", 
-            maxRawVol: (Config.pitchShiftRange*2)-2, newNoteVol: Config.pitchShiftRange, forSong: true, convertRealFactor: -Config.pitchShiftRange+1, associatedEffect: EffectType.pitchShift,
-            promptName: "Songwide Pitch Shift", 
-            promptDesc: ["This setting controls the pitch offset of all instruments regardless of whether or not the instrument has the effect itself, just like the pitch shift slider.", "At $MID your instrument will have no pitch shift. This increases as you decrease toward $LO pitches (half-steps) at the low end, or increases towards +$HI pitches at the high end.", "[ADDITIVE] [$LO - $HI] [pitch]"] },
-        { name: "individual envelope speed", 
-            pianoName: "IndvEnvSpd", 
-            maxRawVol: 63, newNoteVol: 23, forSong: false, convertRealFactor: 0, associatedEffect: EffectType.length,
-            promptName: "Individual Envelope Speed", 
-            promptDesc: ["This setting controls how fast the specified envelope of the instrument will play.", "At $LO, your the envelope will be frozen, and at values near there they will change very slowly. At 23, the envelope will work as usual, performing at normal speed. This increases up to $HI, where the envelope will change very quickly. The speeds are given below:",
-            "[0-4]: x0, x0.01, x0.02, x0.03, x0.04,", "[5-9]: x0.05, x0.06, x0.07, x0.08, x0.09,", "[10-14]: x0.1, x0.2, x0.25, x0.3, x0.33,", "[15-19]: x0.4, x0.5, x0.6, x0.6667, x0.7,", "[20-24]: x0.75, x0.8, x0.9, x1, x1.25,", "[25-29]: x1.3333, x1.5, x1.6667, x1.75, x2,", "[30-34]: x2.25, x2.5, x2.75, x3, x3.5,", "[35-39]: x4, x4.5, x5, x5.5, x6,", "[40-44]: x6.5, x7, x7.5, x8, x8.5,", "[45-49]: x9, x9.5, x10, x11, x12", "[50-54]: x13, x14, x15, x16, x17", "[55-59]: x18, x19, x20, x24, x32", "[60-63]: x40, x64, x128, x256", "[OVERWRITING] [$LO - $HI]"]},
-        { name: "song eq",
-            pianoName: "Song EQ", 
-            maxRawVol: 10, newNoteVol: 0, forSong: true, convertRealFactor: 0, associatedEffect: EffectType.length,
-            promptName: "Song EQ Filter", 
-            promptDesc: ["This setting overwrites every instrument's eq filter. You can do this in a few separate ways, similar to the per instrument eq filter modulator.", "When the option 'morph' is selected, your modulator values will indicate a sub-filter index of your EQ filter to 'morph' to over time. For example, a change from 0 to 1 means your main filter (default) will morph to sub-filter 1 over the specified duration. You can shape the main filter and sub-filters in the large filter editor ('+' button). If your two filters' number, type, and order of filter dots all match up, the morph will happen smoothly and you'll be able to hear them changing. If they do not match up, the filters will simply jump between each other.", "Note that filters will morph based on endpoints in the pattern editor. So, if you specify a morph from sub-filter 1 to 4 but do not specifically drag in new endpoints for 2 and 3, it will morph directly between 1 and 4 without going through the others.", "If you target Dot X or Dot Y, you can finely tune the coordinates of a single dot for your filter. The number of available dots to choose is dependent on your main filter's dot count.", "[OVERWRITING] [$LO - $HI]"]},
         ]);
 }
 
@@ -2096,7 +1929,7 @@ export function getPulseWidthRatio(pulseWidth: number): number {
     // BeepBox formula for reference
     //return Math.pow(0.5, (Config.pulseWidthRange - 1 - pulseWidth) * Config.pulseWidthStepPower) * 0.5;
 
-    return pulseWidth / (Config.pulseWidthRange);
+    return pulseWidth / (Config.pulseWidthRange * 2);
 }
 
 
@@ -2357,7 +2190,7 @@ function generateSawWave(inverse: boolean = false): Float32Array {
         // }
         // return wave;
     // }
-	function generateQuasiSineWave() {
+	function generateRoundedSineWave() {
         const wave = new Float32Array(Config.sineWaveLength + 1);
         for (let i = 0; i < Config.sineWaveLength + 1; i++) {
             wave[i] = Math.round(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength));
@@ -2431,9 +2264,6 @@ export function effectsIncludeRM(effects: number): boolean {
 }
 export function effectsIncludePhaser(effects: number): boolean {
     return (effects & (1 << EffectType.phaser)) != 0;
-}
-export function effectsIncludeNoteRange(effects: number): boolean {
-    return (effects & (1 << EffectType.noteRange)) != 0;
 }
 export function rawChipToIntegrated(raw: DictionaryArray<ChipWave>): DictionaryArray<ChipWave> {
     const newArray: Array<ChipWave> = new Array<ChipWave>(raw.length);

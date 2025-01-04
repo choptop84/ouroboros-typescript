@@ -5,6 +5,7 @@ import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ChangeLoop, ChangeChannelBar } from "./changes";
 import { ColorConfig } from "./ColorConfig";
 import { TrackEditor } from "./TrackEditor";
+import { _loopType } from "../synth/synth";
 
 interface Cursor {
 	startBar: number;

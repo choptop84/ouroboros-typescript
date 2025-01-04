@@ -550,14 +550,13 @@ export class TipPrompt implements Prompt {
 			case "ringMod": {
 				message = div(
 					h2("Ring Modulation"),
-					p(`This setting multiplies a selected wave's frequency with an instrument frequency, this is useful for "bell-like" instruments.`),
+					p(`This setting multiplies a sine wave's frequency with an instrument frequency, this is useful for "bell-like" instruments.`),
 				);
 			} break;
 			case "RingModHz": {
 				message = div(
 					h2("Ring Modulation (Hertz)"),
-					p(`This setting changes the Hertz of the multiplied frequency.`),
-					p(`The offset allows you to increment the Hertz by 1.`),
+					p(`This setting changes the Hertz of the 2nd multiplied frequency with the first frequency.`),
 				);
 			} break;
 			case "phaserMix": {
@@ -583,36 +582,6 @@ export class TipPrompt implements Prompt {
 					h2("Phaser Stages"),
 					p(`This slider changes how many all-passes there are in the phaser. An all-pass is created by splitting an audio signal into paths, every path after the first one that is created is called an all-pass.`),
 					p(`The minimum value of this slider is 1, the reason being that 1 all-pass is the exact same as having no phaser at all, if there were 0 all-passes then the audio would cease to exist.`),
-				);
-			} break;
-			case "unisonBuzzes": {
-				message = div(
-					h2("Unison Buzzing"),
-					p("This setting controls whether or not there's a buzzing noise when there's only 1 unison voice, and the spread is set to something other than 0."),
-				);
-			} break;
-			case "slideSpeedSlider": {
-				message = div(
-					h2("Slide Speed"),
-					p("This slider controls how fast/slow the slide transition is. In other audio software, this setting is sometimes referred to as \"Portamento\"."),
-				);
-			} break;
-			case "strumSpeedSlider": {
-				message = div(
-					h2("Strum Speed"),
-					p("This setting affects how fast your chord will strum."),
-				);
-			} break;
-			case "upperNoteLimit": {
-				message = div(
-					h2("Upper Note Limit"),
-					p("Defines the upper limit in which notes will play, useful for advanced instruments."),
-				);
-			} break;
-			case "lowerNoteLimit": {
-				message = div(
-					h2("Lower Note Limit"),
-					p("Defines the lower limit in which notes will play, useful for advanced instruments."),
 				);
 			} break;
 

@@ -24,8 +24,8 @@ export function prettyNumber(value: number): string {
 }
 
 export class EditorConfig {
-    public static readonly version: string = "1.0"; // Using patch versions in display right now, maybe TODAY. // choptop84 here who wrote this??
-    public static readonly versionDisplayName: string = "Ouroboros";
+    public static readonly version: string = "1.5.1"; // Using patch versions in display right now, maybe TODAY. // choptop84 here who wrote this??
+    public static readonly versionDisplayName: string = "AbyssBox " + EditorConfig.version;
 
     public static readonly releaseNotesURL: string = "./patch_notes.html";
 
@@ -34,8 +34,7 @@ export class EditorConfig {
     public static readonly ctrlName: string = EditorConfig.isOnMac ? "command" : "control";
 
     public static customSamples: string[] | null;
-	
-    public static showSongDetailsAlert: boolean = true;
+	//is this how you do it????
 	
     public static readonly presetCategories: DictionaryArray<PresetCategory> = toNameMap([
         {

@@ -19,8 +19,6 @@ export class Preferences {
 	public closePromptByClickoff: boolean;
 	public oldMobileLayout: boolean;
 	public instrumentSettingsSimplifier: boolean;
-	public promptSongDetails: boolean;
-	public instrumentButtonsAtTop: boolean;
 
 	
 	// Appearance
@@ -91,7 +89,6 @@ export class Preferences {
 		this.displayVolumeBar = window.localStorage.getItem("displayVolumeBar") == "true";
 		this.instrumentCopyPaste = window.localStorage.getItem("instrumentCopyPaste") == "true";
 		this.instrumentImportExport = window.localStorage.getItem("instrumentImportExport") == "true";
-		this.instrumentButtonsAtTop = window.localStorage.getItem("instrumentButtonsAtTop") == "true";
 		this.enableChannelMuting = window.localStorage.getItem("enableChannelMuting") == "true";
 		this.displayBrowserUrl = window.localStorage.getItem("displayBrowserUrl") != "false";
 		this.pressControlForShortcuts = window.localStorage.getItem("pressControlForShortcuts") == "true";
@@ -108,12 +105,11 @@ export class Preferences {
 		this.showInstrumentScrollbars = window.localStorage.getItem("showInstrumentScrollbars") == "true";
 		this.closePromptByClickoff = window.localStorage.getItem("closePromptByClickoff") != "false";
 		this.frostedGlassBackground = window.localStorage.getItem("frostedGlassBackground") == "true";
-		this.displayShortcutButtons = window.localStorage.getItem("displayShortcutButtons") == "true";
+		this.displayShortcutButtons = window.localStorage.getItem("displayShortcutButtons") != "false";
 		this.instrumentSettingsSimplifier = window.localStorage.getItem("instrumentSettingsSimplifier") == "true";
 		this.oldMobileLayout = window.localStorage.getItem("oldMobileLayout") == "true";
 		this.oldModNotes = window.localStorage.getItem("oldModNotes") == "true";
 		this.selectionCounter = window.localStorage.getItem("selectionCounter") != "false";
-		this.promptSongDetails = window.localStorage.getItem("promptSongDetails") != "false";
 
 		// other stuff
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
@@ -161,7 +157,6 @@ export class Preferences {
 		window.localStorage.setItem("enableChannelMuting", this.enableChannelMuting ? "true" : "false");
 		window.localStorage.setItem("instrumentCopyPaste", this.instrumentCopyPaste ? "true" : "false");
 		window.localStorage.setItem("instrumentImportExport", this.instrumentImportExport ? "true" : "false");
-		window.localStorage.setItem("instrumentButtonsAtTop", this.instrumentButtonsAtTop ? "true" : "false");
 		window.localStorage.setItem("displayBrowserUrl", this.displayBrowserUrl ? "true" : "false");
 		window.localStorage.setItem("pressControlForShortcuts", this.pressControlForShortcuts ? "true" : "false");
 		window.localStorage.setItem("enableMidi", this.enableMidi ? "true" : "false");
@@ -176,7 +171,6 @@ export class Preferences {
 		window.localStorage.setItem("showInstrumentScrollbars", this.showInstrumentScrollbars ? "true" : "false");
 		window.localStorage.setItem("notesFlashWhenPlayed", this.notesFlashWhenPlayed ? "true" : "false");
 		window.localStorage.setItem("selectionCounter", this.selectionCounter ? "true": "false");
-		window.localStorage.setItem("promptSongDetails", this.promptSongDetails ? "true" : "false");
 		window.localStorage.setItem("keyboardLayout", this.keyboardLayout);
 		window.localStorage.setItem("bassOffset", String(this.bassOffset));
 		window.localStorage.setItem("layout", this.layout);
