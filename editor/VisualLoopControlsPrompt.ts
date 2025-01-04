@@ -198,7 +198,7 @@ class VisualLoopControlsHandle {
         this._handleDragOffset = null;
         this._whenMouseUpHappens();
     }
-    
+
     public cleanUp = (): void => {
         window.removeEventListener("mousemove", this._whenMouseMoves);
         this.canvas!.removeEventListener("mousedown", this._whenMouseIsDown);
@@ -415,7 +415,7 @@ export class VisualLoopControlsPrompt {
     );
     public container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 500px;" },
         div(
-            div({class:"promptTitle"}, h2({class:"loop-controlsExt",style:"text-align: inherit;"}, ""), h2({class:"loop-controlsTitle"}, "Loop Controls")),
+            h2({ style: "margin-bottom: 0.5em;" }, "Loop Controls"),
             this._sampleIsLoadingMessage,
             this._loopControlsContainer,
             div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._okayButton)

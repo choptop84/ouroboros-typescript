@@ -29,14 +29,12 @@ interface ParsedEntries {
 //   assuming that false is the same as if it wasn't actually set should work
 //   fine.
 // - Use constants or an enum for the key-value pairs.
+
 export class AddSamplesPrompt {
     private readonly _maxSamples: number = 64;
 
     private _doc: SongDocument;
     private readonly _entries: SampleEntry[] = [];
-
-    private _doReload: boolean = false;
-
     private readonly _entryOptionsDisplayStates: Dictionary<boolean> = {};
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
     private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width: 45%;" }, "Okay");
@@ -47,44 +45,36 @@ export class AddSamplesPrompt {
         this._addSampleButton,
         this._addMultipleSamplesButton
     );
-    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#" }, "Wanna add your own samples? Click here!");
+    private readonly _instructionsLink: HTMLAnchorElement = a({ href: "#" }, "Here's more information and some instructions on how to use custom samples in Slarmoo's Box.");
     private readonly _description: HTMLDivElement = div(
         div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "Before you ask: ",
-        ),
-	div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "legacySamples",
-            " = Pandoras Box's Samples "
-        ),
-	div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "nintariboxSamples",
-            " = nintaribox's Samples "
-        ),
-	div({ style: "margin-bottom: 0.5em; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text;" },
-            "marioPaintboxSamples",
-            " = MarioPaintBox's Samples."
+            "In order to use the old Slarmoo's Box samples, you should add ",
+            code("legacySamples"),
+            " as an URL. You can also use ",
+            code("nintariboxSamples"),
+            " and ",
+            code("marioPaintboxSamples"),
+            " for more built-in sample packs."
         ),
         div({ style: "margin-bottom: 0.5em;" },
-            "The order of these samples is important - if you change it you'll break your song!",
-	    "Since they're sorted by which ones you added first, changing the position of the sample in the list will",
-            "change your instruments' sample to a different sample!"
-	),
+            "The order of these samples is important - if you change it you'll break your song!"
+        ),
         div({ style: "margin-bottom: 0.5em;" },
             this._instructionsLink,
-        ),
+        )
     );
     private readonly _closeInstructionsButton: HTMLButtonElement = button({ style: "height: auto; min-height: var(--button-size); width: 100%;" }, "Close instructions");
     private readonly _instructionsArea: HTMLDivElement = div(
         { style: "display: none; margin-top: 0; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; cursor: text; overflow-y: auto;" },
-        div({class:"promptTitle"}, h2({class:"samplesExt",style:"text-align: inherit;"}, ""), h2({class:"samplesTitle",style:"margin-bottom: 0.5em;"},"Add Samples")),
+        h2("Add Samples"),
         div({ style: "margin-top: 0.5em; margin-bottom: 0.5em;" },
-            "In UB and in turn AB, custom samples are loaded from arbitrary URLs.",
+            "In Slarmoo's Box, custom samples are loaded from arbitrary URLs.",
         ),
         div({ style: `margin-top: 0.5em; margin-bottom: 0.5em; color: ${ColorConfig.secondaryText};` },
             "(Technically, the web server behind the URL needs to support ",
-              a({ href: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", target: "_blank", }, "CORS"),
-              ", but you don't need to know about that: ",
-              " the sample just won't load if that's not the case)",
+            a({ href: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS", target: "_blank", }, "CORS"),
+            ", but you don't need to know about that: ",
+            " the sample just won't load if that's not the case)",
         ),
         div({ style: "margin-top: 0.5em; margin-bottom: 0.5em;" },
             details(
@@ -113,12 +103,12 @@ export class AddSamplesPrompt {
         div({ style: "margin-top: 0.5em; margin-bottom: 1em;" },
             "Finally, if have a soundfont you'd like to get samples from, consider using this ",
             a({ href: "./sample_extractor.html", target: "_blank" }, "sample extractor"),
-            "!"
+            "."
         ),
         div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between; margin-top: 0.5em;" }, this._closeInstructionsButton)
     );
     private readonly _addSamplesArea: HTMLDivElement = div({ style: "overflow-y: auto;" },
-    div({class:"promptTitle"}, h2({class:"samplesExt",style:"text-align: inherit;"}, ""), h2({class:"samplesTitle",style:"margin-bottom: 0.5em;"},"Add Samples")),
+        h2("Add Samples"),
         div({ style: "display: flex; flex-direction: column; align-items: center; margin-bottom: 0.5em;" },
             this._description,
             div({ style: "width: 100%; max-height: 450px; overflow-y: scroll;" }, this._entryContainer),
@@ -183,9 +173,7 @@ export class AddSamplesPrompt {
     private _close = (): void => {
         this._doc.prompt = null;
         this._doc.undo();
-        if (this._doReload == true) {
-            this._saveChanges();
-        }
+        this._saveChanges();
     }
 
     private _saveChanges = (): void => {
@@ -213,7 +201,6 @@ export class AddSamplesPrompt {
         this._entryOptionsDisplayStates[entryIndex] = false;
         this._reconfigureAddSampleButton();
         this._render(true);
-        this._doReload = true;
     }
 
     private _whenAddMultipleSamplesClicked = (event: Event): void => {
@@ -242,7 +229,7 @@ export class AddSamplesPrompt {
             this._bulkAddTextarea.value
                 .replace(/\n/g, "|")
                 .split("|")
-                .map((x: string) => decodeURIComponent(x.trim()))
+                // .map((x: string) => decodeURIComponent(x.trim()))
                 .filter((x: string) => x !== ""),
             false
         );
@@ -260,7 +247,6 @@ export class AddSamplesPrompt {
         }
         this._reconfigureAddSampleButton();
         this._render(false);
-        this._doReload = true;
     }
 
     private _whenOptionsAreToggled = (event: Event): void => {
@@ -283,7 +269,6 @@ export class AddSamplesPrompt {
             sampleNameElement.innerText = sampleName;
             sampleNameElement.title = sampleName;
         }
-        this._doReload = true;
     }
 
     private _whenSampleRateChanges = (event: Event): void => {
@@ -495,8 +480,7 @@ export class AddSamplesPrompt {
                     });
                 }
                 useMarioPaintboxSamples = true;
-            } 
-            else {
+            } else {
                 let urlSliced: string = url;
                 let sampleRate: number = 44100;
                 let rootKey: number = 60;

@@ -1,16 +1,16 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
-import { HarmonicsWave, Instrument } from "../synth/synth";
+import { Config, BaseWaveTypes } from "../synth/SynthConfig";
+import { AdditiveWave, Instrument } from "../synth/synth";
 import { SongDocument } from "./SongDocument";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { ColorConfig } from "./ColorConfig";
-import { ChangeHarmonics } from "./changes";
+import { ChangeAdditive } from "./changes";
 import { prettyNumber } from "./EditorConfig";
 import { Prompt } from "./Prompt";
 import { SongEditor } from "./SongEditor";
 
-export class HarmonicsEditor {
+export class AdditiveEditor {
     private readonly _editorWidth: number = 120;
     private readonly _editorHeight: number = 26;
     private readonly _octaves: SVGSVGElement = SVG.svg({ "pointer-events": "none" });
@@ -18,6 +18,8 @@ export class HarmonicsEditor {
     private readonly _curve: SVGPathElement = SVG.path({ fill: "none", stroke: "currentColor", "stroke-width": 2, "pointer-events": "none" });
     private readonly _lastControlPoints: SVGRectElement[] = [];
     private readonly _lastControlPointContainer: SVGSVGElement = SVG.svg({ "pointer-events": "none" });
+    private readonly _waveTypeButtons: HTMLButtonElement[] = [];
+    public readonly waveTypeButtonContainer: HTMLDivElement = HTML.div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: center; margin-left: 0px; margin-right: 8px" });
     private readonly _svg: SVGSVGElement = SVG.svg({ style: "background-color: ${ColorConfig.editorBackground}; touch-action: none; cursor: crosshair;", width: "100%", height: "100%", viewBox: "0 0 " + this._editorWidth + " " + this._editorHeight, preserveAspectRatio: "none" },
         this._octaves,
         this._fifths,
@@ -25,36 +27,40 @@ export class HarmonicsEditor {
         this._lastControlPointContainer,
     );
 
-    public readonly container: HTMLElement = HTML.div({ class: "harmonics", style: "height: 100%;" }, this._svg);
+    public readonly container: HTMLElement = HTML.div({ class: "additive", style: "height: 100%;" }, this._svg);
 
     private _mouseX: number = 0;
     private _mouseY: number = 0;
     private _freqPrev: number = 0;
     private _ampPrev: number = 0;
     private _mouseDown: boolean = false;
-    private _change: ChangeHarmonics | null = null;
+    public _change: ChangeAdditive | null = null;
     private _renderedPath: String = "";
     private _renderedFifths: boolean = true;
-    private instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-    private readonly _initial: HarmonicsWave = this.instrument.harmonicsWave;
 
-    private _undoHistoryState: number = 0;
-    private _changeQueue: number[][] = [];
+    private _instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+    private _initial: AdditiveWave = this._instrument.additiveWave;
+    private _current: AdditiveWave = this._initial;
 
-    constructor(private _doc: SongDocument, private _isPrompt: boolean = false) {
-        for (let i: number = 1; i <= Config.harmonicsControlPoints; i = i * 2) {
-            this._octaves.appendChild(SVG.rect({ fill: ColorConfig.tonic, x: (i - 0.5) * (this._editorWidth - 8) / (Config.harmonicsControlPoints - 1) - 1, y: 0, width: 2, height: this._editorHeight }));
+    constructor(private _doc: SongDocument) {
+        for (let i: number = 1; i <= Config.additiveControlPoints; i = i * 2) {
+            this._octaves.appendChild(SVG.rect({ fill: ColorConfig.tonic, x: (i - 0.5) * (this._editorWidth - 8) / (Config.additiveControlPoints - 1) - 1, y: 0, width: 2, height: this._editorHeight }));
         }
-        for (let i: number = 3; i <= Config.harmonicsControlPoints; i = i * 2) {
-            this._fifths.appendChild(SVG.rect({ fill: ColorConfig.fifthNote, x: (i - 0.5) * (this._editorWidth - 8) / (Config.harmonicsControlPoints - 1) - 1, y: 0, width: 2, height: this._editorHeight }));
+        for (let i: number = 3; i <= Config.additiveControlPoints; i = i * 2) {
+            this._fifths.appendChild(SVG.rect({ fill: ColorConfig.fifthNote, x: (i - 0.5) * (this._editorWidth - 8) / (Config.additiveControlPoints - 1) - 1, y: 0, width: 2, height: this._editorHeight }));
         }
         for (let i: number = 0; i < 4; i++) {
             const rect: SVGRectElement = SVG.rect({ fill: "currentColor", x: (this._editorWidth - i * 2 - 1), y: 0, width: 1, height: this._editorHeight });
             this._lastControlPoints.push(rect);
             this._lastControlPointContainer.appendChild(rect);
         }
-
-        this.storeChange();
+        for (let i: number = 0; i < Config.additiveControlPoints; i++) {
+            const waveTypeButton: HTMLButtonElement = HTML.button({ style: `width:21.7px;margin:3px;margin-left: ${i == Config.additiveControlPoints-1 ? 19.4: 3}px;` }, this._getShape(this._current.waveTypes[i], i));
+            this._waveTypeButtons.push(waveTypeButton);
+            this.waveTypeButtonContainer.appendChild(waveTypeButton);
+            const index = i;
+            waveTypeButton.addEventListener("click", () => this._buttonPressed(index));
+        }
 
         this.container.addEventListener("mousedown", this._whenMousePressed);
         document.addEventListener("mousemove", this._whenMouseMoved);
@@ -66,61 +72,60 @@ export class HarmonicsEditor {
         this.container.addEventListener("touchcancel", this._whenCursorReleased);
     }
 
-    public storeChange = (): void => {
-        // Check if change is unique compared to the current history state
-        var sameCheck = true;
-        if (this._changeQueue.length > 0) {
-            for (var i = 0; i < Config.harmonicsControlPoints; i++) {
-                if (this._changeQueue[this._undoHistoryState][i] != this.instrument.harmonicsWave.harmonics[i]) {
-                    sameCheck = false; i = Config.harmonicsControlPoints;
-                }
+    private _buttonPressed(buttonIndex: number) {
+        if (this._waveTypeButtons[buttonIndex]) {
+            if (this._current.waveTypes[buttonIndex] < BaseWaveTypes.length-1) {
+                this._current.waveTypes[buttonIndex]++;
+            } else {
+                this._current.waveTypes[buttonIndex] = 0
+            };
+            const existingChild = document.getElementById("SVGshape"+buttonIndex);
+            if (existingChild) {
+                existingChild.remove();
+                this._waveTypeButtons[buttonIndex].appendChild(this._getShape(this._current.waveTypes[buttonIndex], buttonIndex));
             }
+            const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+            this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
         }
-
-        if (sameCheck == false || this._changeQueue.length == 0) {
-
-            // Create new branch in history, removing all after this in time
-            this._changeQueue.splice(0, this._undoHistoryState);
-
-            this._undoHistoryState = 0;
-
-            this._changeQueue.unshift(this.instrument.harmonicsWave.harmonics.slice());
-
-            // 32 undo max
-            if (this._changeQueue.length > 32) {
-                this._changeQueue.pop();
-            }
-
-        }
-
     }
 
-    public undo = (): void => {
-        // Go backward, if there is a change to go back to
-        if (this._undoHistoryState < this._changeQueue.length - 1) {
-            this._undoHistoryState++;
-            const harmonics: number[] = this._changeQueue[this._undoHistoryState].slice();
-            this.setHarmonicsWave(harmonics);
+    private _getShape(shape: number, index: number): SVGSVGElement {
+        switch (shape) {
+            case BaseWaveTypes.sine:
+                return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+                    SVG.path({ d: "M 2 12 C 12 0, 13 23, 23 13", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+                ])
+            case BaseWaveTypes.square:
+                return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+                    SVG.path({ d: "M 2 2 L 2 23 L 23 23 L 23 2 L 2 2 z", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+                ])
+            case BaseWaveTypes.triangle:
+                return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+                    SVG.path({ d: "M 2 23 L 12 2 L 23 23 L 2 23 z", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+                ])
+            case BaseWaveTypes.sawtooth:
+                return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+                    SVG.path({ d: "M 3 3 L 3 24 L 13 24 L 3 3 z M 14 24 L 14 3 L 24 24 L 14 24 z", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+                ])
+            // case BaseWaveTypes.ramp:
+            //     return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+            //         SVG.path({ d: "M 12 3 L 2 24 L 12 24 L 12 3 z M 13 24 L 23 3 L 23 24 L 13 24 z", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+            //     ])
+            // case BaseWaveTypes.trapezoid:
+            //     return SVG.svg({ id: "SVGshape" + index, style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none; margin:1px;", width: "20px", height: "20px", viewBox: "0 0 26 26" }, [
+            //         SVG.path({ d: "M 2 23 L 23 23 L 17 2 L 8 2 L 2 23 z", strokeWidth: "3", stroke: "currentColor", fill: "none" }),
+            //     ])
+            default:
+                return this._getShape(BaseWaveTypes.sine, index);
         }
-
-    }
-
-    public redo = (): void => {
-        // Go forward, if there is a change to go to
-        if (this._undoHistoryState > 0) {
-            this._undoHistoryState--;
-            const harmonics: number[] = this._changeQueue[this._undoHistoryState].slice();
-            this.setHarmonicsWave(harmonics);
-        }
-
     }
 
     private _xToFreq(x: number): number {
-        return (Config.harmonicsControlPoints - 1) * x / (this._editorWidth - 8) - 0.5;
+        return (Config.additiveControlPoints - 1) * x / (this._editorWidth - 8) - 0.5;
     }
 
     private _yToAmp(y: number): number {
-        return Config.harmonicsMax * (1 - y / this._editorHeight);
+        return Config.additiveMax * (1 - y / this._editorHeight);
     }
 
     private _whenMousePressed = (event: MouseEvent): void => {
@@ -171,7 +176,6 @@ export class HarmonicsEditor {
         if (isNaN(this._mouseX)) this._mouseX = 0;
         if (isNaN(this._mouseY)) this._mouseY = 0;
         this._whenCursorMoved();
-        this.render();
     }
 
     private _whenCursorMoved(): void {
@@ -179,83 +183,95 @@ export class HarmonicsEditor {
             const freq: number = this._xToFreq(this._mouseX);
             const amp: number = this._yToAmp(this._mouseY);
 
-            const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-            const harmonicsWave: HarmonicsWave = instrument.harmonicsWave; //(this._harmonicsIndex == null) ? instrument.harmonicsWave : instrument.drumsetSpectrumWaves[this._harmonicsIndex];
+            this._updateAdditive(freq, amp);
+            this._doc.setProspectiveChange(this._change!);
+        }
+    }
 
-            if (freq != this._freqPrev) {
-                const slope: number = (amp - this._ampPrev) / (freq - this._freqPrev);
-                const offset: number = this._ampPrev - this._freqPrev * slope;
-                const lowerFreq: number = Math.ceil(Math.min(this._freqPrev, freq));
-                const upperFreq: number = Math.floor(Math.max(this._freqPrev, freq));
-                for (let i: number = lowerFreq; i <= upperFreq; i++) {
-                    if (i < 0 || i >= Config.harmonicsControlPoints) continue;
-                    harmonicsWave.harmonics[i] = Math.max(0, Math.min(Config.harmonicsMax, Math.round(i * slope + offset)));
-                }
+    private _updateAdditive(freq: number, amp: number) {
+        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+
+        if (freq != this._freqPrev) {
+            const slope: number = (amp - this._ampPrev) / (freq - this._freqPrev);
+            const offset: number = this._ampPrev - this._freqPrev * slope;
+            const lowerFreq: number = Math.ceil(Math.min(this._freqPrev, freq));
+            const upperFreq: number = Math.floor(Math.max(this._freqPrev, freq));
+            for (let i: number = lowerFreq; i <= upperFreq; i++) {
+                if (i < 0 || i >= Config.additiveControlPoints) continue;
+                this._current.additives[i] = Math.max(0, Math.min(Config.additiveMax, Math.round(i * slope + offset)));
             }
+        }
 
-            harmonicsWave.harmonics[Math.max(0, Math.min(Config.harmonicsControlPoints - 1, Math.round(freq)))] = Math.max(0, Math.min(Config.harmonicsMax, Math.round(amp)));
+        this._current.additives[Math.max(0, Math.min(Config.additiveControlPoints - 1, Math.round(freq)))] = Math.max(0, Math.min(Config.additiveMax, Math.round(amp)));
 
-            this._freqPrev = freq;
-            this._ampPrev = amp;
+        this._freqPrev = freq;
+        this._ampPrev = amp;
 
-            this._change = new ChangeHarmonics(this._doc, instrument, harmonicsWave);
-            this._doc.setProspectiveChange(this._change);
+        this._change = new ChangeAdditive(this._doc, instrument, this._current);
+    }
+
+    public getAddditiveWave(): AdditiveWave {
+        return this._current;
+    }
+
+    public setAdditiveWave(additive: AdditiveWave) {
+        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._current = additive;
+        this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
+        this.render();
+        for (let i: number = 0; i < Config.additiveControlPoints; i++) {
+            if (this._waveTypeButtons[i]) {
+                const existingChild = document.getElementById("SVGshape" + i);
+                if (existingChild) {
+                    existingChild.remove();
+                }
+                this._waveTypeButtons[i].appendChild(this._getShape(this._current.waveTypes[i], i));
+            }
         }
     }
 
     private _whenCursorReleased = (event: Event): void => {
         if (this._mouseDown) {
-            if (!this._isPrompt) {
-                this._doc.record(this._change!);
-            }
-            this.storeChange();
+            this._doc.record(this._change!);
             this._change = null;
         }
         this._mouseDown = false;
     }
 
-    public getHarmonicsWave(): HarmonicsWave {
+    public saveSettings() {
         const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        return instrument.harmonicsWave;
-    }
-
-    public setHarmonicsWave(harmonics: number[]) {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        for (let i = 0; i < Config.harmonicsControlPoints; i++) {
-            instrument.harmonicsWave.harmonics[i] = harmonics[i];
-        }
-        this._doc.record(new ChangeHarmonics(this._doc, instrument, instrument.harmonicsWave));
-        this.render();
-    }
-
-    public saveSettings(): ChangeHarmonics {
-        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        return new ChangeHarmonics(this._doc, instrument, instrument.harmonicsWave);
+        this._doc.record(new ChangeAdditive(this._doc, instrument, this._current));
     }
 
     public resetToInitial() {
         const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        this.setHarmonicsWave(this._initial.harmonics);
-        this._doc.record(new ChangeHarmonics(this._doc, instrument, this._initial));
+        this._doc.record(new ChangeAdditive(this._doc, instrument, this._initial));
+    }
+
+    public rerenderWave() {
+        this._instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._initial = this._instrument.additiveWave;
+        this._current = this._initial;
+        this.render();
     }
 
     public render(): void {
         const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        const harmonicsWave: HarmonicsWave = instrument.harmonicsWave; //(this._harmonicsIndex == null) ? instrument.harmonicsWave : instrument.drumsetSpectrumWaves[this._harmonicsIndex];
+        const additiveWave: AdditiveWave = instrument.additiveWave; 
         const controlPointToHeight = (point: number): number => {
-            return (1 - (point / Config.harmonicsMax)) * this._editorHeight;
+            return (1 - (point / Config.additiveMax)) * this._editorHeight;
         }
 
         let bottom: string = prettyNumber(this._editorHeight);
         let path: string = "";
-        for (let i: number = 0; i < Config.harmonicsControlPoints - 1; i++) {
-            if (harmonicsWave.harmonics[i] == 0) continue;
-            let xPos: string = prettyNumber((i + 0.5) * (this._editorWidth - 8) / (Config.harmonicsControlPoints - 1));
+        for (let i: number = 0; i < Config.additiveControlPoints - 1; i++) {
+            if (additiveWave.additives[i] == 0) continue;
+            let xPos: string = prettyNumber((i + 0.5) * (this._editorWidth - 8) / (Config.additiveControlPoints - 1));
             path += "M " + xPos + " " + bottom + " ";
-            path += "L " + xPos + " " + prettyNumber(controlPointToHeight(harmonicsWave.harmonics[i])) + " ";
+            path += "L " + xPos + " " + prettyNumber(controlPointToHeight(additiveWave.additives[i])) + " ";
         }
 
-        const lastHeight: number = controlPointToHeight(harmonicsWave.harmonics[Config.harmonicsControlPoints - 1]);
+        const lastHeight: number = controlPointToHeight(additiveWave.additives[Config.additiveControlPoints - 1]);
         for (let i: number = 0; i < 4; i++) {
             const rect: SVGRectElement = this._lastControlPoints[i];
             rect.setAttribute("y", prettyNumber(lastHeight));
@@ -273,9 +289,9 @@ export class HarmonicsEditor {
     }
 }
 
-export class HarmonicsEditorPrompt implements Prompt {
+export class AdditiveEditorPrompt implements Prompt {
 
-    public readonly harmonicsEditor: HarmonicsEditor = new HarmonicsEditor(this._doc, true);
+    public readonly additiveEditor: AdditiveEditor = new AdditiveEditor(this._doc);
 
     public readonly _playButton: HTMLButtonElement = HTML.button({ style: "width: 55%;", type: "button" });
 
@@ -298,13 +314,14 @@ export class HarmonicsEditorPrompt implements Prompt {
         ]),
     ]);
     private readonly copyPasteContainer: HTMLDivElement = HTML.div({ style: "width: 185px;" }, this.copyButton, this.pasteButton);
-    public readonly container: HTMLDivElement = HTML.div({ class: "prompt noSelection", style: "width: 500px;"},
-        HTML.h2("Edit Harmonics Instrument"),
+    public readonly container: HTMLDivElement = HTML.div({ class: "prompt noSelection", style: "width: 800px; height: 500px" },
+        HTML.h2("Edit Additive Instrument"),
         HTML.div({ style: "display: flex; width: 55%; align-self: center; flex-direction: row; align-items: center; justify-content: center;" },
             this._playButton,
         ),
-        HTML.div({ style: "display: flex; flex-direction: row; align-items: center; justify-content: center;"},
-            this.harmonicsEditor.container,
+        HTML.div({ style: "display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%" },
+            this.additiveEditor.container,
+            this.additiveEditor.waveTypeButtonContainer,
         ),
         HTML.div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" },
             this._okayButton,
@@ -320,15 +337,14 @@ export class HarmonicsEditorPrompt implements Prompt {
         this.copyButton.addEventListener("click", this._copySettings);
         this.pasteButton.addEventListener("click", this._pasteSettings);
         this._playButton.addEventListener("click", this._togglePlay);
-        this.harmonicsEditor.container.addEventListener("mousemove", () => this.harmonicsEditor.render());
-        this.harmonicsEditor.container.addEventListener("mousedown", () => this.harmonicsEditor.render());
-        this.container.addEventListener("mousemove", () => this.harmonicsEditor.render());
-        this.container.addEventListener("mousedown", () => this.harmonicsEditor.render());
+        this.additiveEditor.container.addEventListener("mousemove", () => this.additiveEditor.render());
+        this.container.addEventListener("mousemove", () => this.additiveEditor.render());
+        this.container.addEventListener("mousedown", () => this.additiveEditor.render());
         this.updatePlayButton();
 
         setTimeout(() => this._playButton.focus());
 
-        this.harmonicsEditor.render();
+        this.additiveEditor.render();
     }
 
     private _togglePlay = (): void => {
@@ -352,26 +368,33 @@ export class HarmonicsEditorPrompt implements Prompt {
 
     private _close = (): void => {
         this._doc.prompt = null;
-        this._doc.undo();
+        this.additiveEditor.resetToInitial();
     }
 
     public cleanUp = (): void => {
         this._okayButton.removeEventListener("click", this._saveChanges);
         this._cancelButton.removeEventListener("click", this._close);
         this.container.removeEventListener("keydown", this.whenKeyPressed);
-        this.harmonicsEditor.container.removeEventListener("mousemove", () => this.harmonicsEditor.render());
+        this.additiveEditor.container.removeEventListener("mousemove", () => this.additiveEditor.render());
         this._playButton.removeEventListener("click", this._togglePlay);
     }
 
     private _copySettings = (): void => {
-        const harmonicsCopy: HarmonicsWave = this.harmonicsEditor.getHarmonicsWave();
-        window.localStorage.setItem("harmonicsCopy", JSON.stringify(harmonicsCopy.harmonics));
+        const additiveCopy: AdditiveWave = this.additiveEditor.getAddditiveWave();
+        window.localStorage.setItem("additiveCopy", JSON.stringify({
+            "additives": additiveCopy.additives,
+            "waveTypes": additiveCopy.waveTypes
+        }));
     }
 
     private _pasteSettings = (): void => {
-        const storedHarmonicsWave: any = JSON.parse(String(window.localStorage.getItem("harmonicsCopy")));
-        this.harmonicsEditor.setHarmonicsWave(storedHarmonicsWave);
-        this.harmonicsEditor.storeChange();
+        const storedAdditiveWave: any = JSON.parse(String(window.localStorage.getItem("additiveCopy")));
+        const parsedAdditive: AdditiveWave = new AdditiveWave;
+        for (let i: number = 0; i < Config.additiveControlPoints; i++) {
+            parsedAdditive.additives[i] = storedAdditiveWave["additives"][i];
+            parsedAdditive.waveTypes[i] = storedAdditiveWave["waveTypes"][i];
+        }
+        this.additiveEditor.setAdditiveWave(parsedAdditive);
     }
 
     public whenKeyPressed = (event: KeyboardEvent): void => {
@@ -382,14 +405,14 @@ export class HarmonicsEditorPrompt implements Prompt {
             this._togglePlay();
             event.preventDefault();
         }
-        else if (event.keyCode == 90) { // z
-            this.harmonicsEditor.undo();
-            event.stopPropagation();
-        }
-        else if (event.keyCode == 89) { // y
-            this.harmonicsEditor.redo();
-            event.stopPropagation();
-        }
+        // else if (event.keyCode == 90) { // z
+        //     this.additiveEditor.undo();
+        //     event.stopPropagation();
+        // }
+        // else if (event.keyCode == 89) { // y
+        //     this.additiveEditor.redo();
+        //     event.stopPropagation();
+        // }
         else if (event.keyCode == 219) { // [
             this._doc.synth.goToPrevBar();
         }
@@ -400,7 +423,7 @@ export class HarmonicsEditorPrompt implements Prompt {
 
     private _saveChanges = (): void => {
         this._doc.prompt = null;
-        this._doc.record(this.harmonicsEditor.saveSettings(), true);
-        this._doc.prompt = null;
+        // Save again just in case
+        this.additiveEditor.saveSettings();
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { getLocalStorageItem, Chord, Transition, Config} from "../synth/SynthConfig";
+import { getLocalStorageItem, Chord, Transition, Config } from "../synth/SynthConfig";
 import { NotePin, Note, makeNotePin, FilterSettings, Channel, Pattern, Instrument, FilterControlPoint } from "../synth/synth";
 import { ColorConfig } from "./ColorConfig";
 import { SongDocument } from "./SongDocument";
@@ -39,14 +39,14 @@ export class PatternEditor {
     private readonly _svgNoteBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorNoteBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
     private readonly _svgDrumBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorDrumBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
     private readonly _svgModBackground: SVGPatternElement = SVG.pattern({ id: "patternEditorModBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
-    private readonly _svgBackground: SVGRectElement = SVG.rect({ id:"pitchEditorBackground", x: "0", y: "0", style:`opacity: ${getLocalStorageItem("customThemeImageOpacity", "1")};`, "pointer-events": "none", fill: "url(#patternEditorNoteBackground" + this._barOffset + ")" });
+    private readonly _svgBackground: SVGRectElement = SVG.rect({ x: "0", y: "0", "pointer-events": "none", fill: "url(#patternEditorNoteBackground" + this._barOffset + ")" });
     private _svgNoteContainer: SVGSVGElement = SVG.svg();
     private readonly _svgPlayhead: SVGRectElement = SVG.rect({ x: "0", y: "0", width: "4", fill: ColorConfig.playhead, "pointer-events": "none" });
     private readonly _selectionRect: SVGRectElement = SVG.rect({ class: "dashed-line dash-move", fill: ColorConfig.boxSelectionFill, stroke: ColorConfig.hoverPreview, "stroke-width": 2, "stroke-dasharray": "5, 3", "fill-opacity": "0.4", "pointer-events": "none", visibility: "hidden" });
     private readonly _svgPreview: SVGPathElement = SVG.path({ fill: "none", stroke: ColorConfig.hoverPreview, "stroke-width": "2", "pointer-events": "none" });
     public modDragValueLabel: HTMLDivElement = HTML.div({ width: "90", "text-anchor": "start", contenteditable: "true", style: "display: flex, justify-content: center; align-items:center; position:absolute; pointer-events: none;", "dominant-baseline": "central", });
-    public _svg: SVGSVGElement = SVG.svg({ id:'firstImage', style: `background-image: url(${getLocalStorageItem("customTheme", "")}); background-repeat: no-repeat; background-size: 100% 100%; background-color: ${ColorConfig.editorBackground}; touch-action: none; position: absolute;`, width: "100%", height: "100%" },
-	SVG.defs(
+    public _svg: SVGSVGElement = SVG.svg({ id: 'firstImage', style: `background-image: url(${getLocalStorageItem("customTheme", "")}); background-repeat: no-repeat; background-size: 100% 100%; background-color: ${ColorConfig.editorBackground}; touch-action: none; position: absolute;`, width: "100%", height: "100%" },
+        SVG.defs(
             this._svgNoteBackground,
             this._svgDrumBackground,
             this._svgModBackground,
@@ -116,24 +116,6 @@ export class PatternEditor {
     private _renderedBeatWidth: number = -1;
     private _renderedPitchHeight: number = -1;
     private _renderedFifths: boolean = false;
-    private _renderedThirds: boolean = false;
-    private _renderedACS: boolean = false;
-    private _renderedPiano: boolean = false;
-
-    private _setKey: number = 12;
-
-    /*private _pitch1white: boolean = false;
-    private _pitch2white: boolean = false;
-    private _pitch3white: boolean = false;
-    private _pitch4white: boolean = false;
-    private _pitch5white: boolean = false;
-    private _pitch6white: boolean = false;
-    private _pitch7white: boolean = false;
-    private _pitch8white: boolean = false;
-    private _pitch9white: boolean = false;
-    private _pitch10white: boolean = false;
-    private _pitch11white: boolean = false; */
-
     private _renderedDrums: boolean = false;
     private _renderedMod: boolean = false;
     private _renderedRhythm: number = -1;
@@ -183,9 +165,8 @@ export class PatternEditor {
     }
 
     private _getMaxPitch(): number {
-		return this._doc.song.getChannelIsMod(this._doc.channel) ? Config.modCount - 1 : ( this._doc.song.getChannelIsNoise(this._doc.channel) ? Config.drumCount - 1 : Config.maxPitch );
-	}
-
+        return this._doc.song.getChannelIsMod(this._doc.channel) ? Config.modCount - 1 : (this._doc.song.getChannelIsNoise(this._doc.channel) ? Config.drumCount - 1 : Config.maxPitch);
+    }
 
     private _validateModDragLabelInput = (event: Event): void => {
         const label: HTMLDivElement = <HTMLDivElement>event.target;
@@ -216,14 +197,14 @@ export class PatternEditor {
             this._dragChange = sequence;
             this._doc.setProspectiveChange(this._dragChange);
 
-            sequence.append(new ChangeSizeBend(this._doc, this._modDragNote, this._modDragPin.time, presValue- Config.modulators[this._modDragSetting].convertRealFactor, this._modDragPin.interval, this.shiftMode));
+            sequence.append(new ChangeSizeBend(this._doc, this._modDragNote, this._modDragPin.time, presValue - Config.modulators[this._modDragSetting].convertRealFactor, this._modDragPin.interval, this.shiftMode));
 
         }
     }
 
     private _getMaxDivision(): number {
         if (this.controlMode && this._mouseHorizontal)
-        return Config.partsPerBeat;
+            return Config.partsPerBeat;
         const rhythmStepsPerBeat: number = Config.rhythms[this._doc.song.rhythm].stepsPerBeat;
         if (rhythmStepsPerBeat % 4 == 0) {
             // Beat is divisible by 2 (and 4).
@@ -240,7 +221,7 @@ export class PatternEditor {
 
     private _getMinDivision(): number {
         if (this.controlMode && this._mouseHorizontal)
-        return 1;
+            return 1;
         return Config.partsPerBeat / Config.rhythms[this._doc.song.rhythm].stepsPerBeat;
     }
 
@@ -323,7 +304,7 @@ export class PatternEditor {
 
                     this.modDragValueLabel.style.setProperty("color", "#666688");
                     this.modDragValueLabel.style.setProperty("display", "");
-                    const mod: number = Math.max( 0, Config.modCount - 1 - this._cursor.curNote.pitches[0]);
+                    const mod: number = Math.max(0, Config.modCount - 1 - this._cursor.curNote.pitches[0]);
 
                     let setting: number = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument(this._barOffset)].modulators[mod];
 
@@ -347,8 +328,7 @@ export class PatternEditor {
                     this.modDragValueLabel.style.setProperty("top", "" + this._modDragValueLabelTop + "px");
                     this.modDragValueLabel.textContent = "" + presValue;
 
-                }
-                else {
+                } else {
                     this.modDragValueLabel.style.setProperty("display", "none");
                     this.modDragValueLabel.style.setProperty("pointer-events", "none");
                     this.modDragValueLabel.setAttribute("contenteditable", "false");
@@ -427,7 +407,6 @@ export class PatternEditor {
                 }
             }
         } else {
-
             this._cursor.pitch = this._snapToPitch(mousePitch, 0, this._getMaxPitch());
             const defaultLength: number = this._copiedPins[this._copiedPins.length - 1].time;
             const fullBeats: number = Math.floor(this._cursor.part / Config.partsPerBeat);
@@ -475,12 +454,12 @@ export class PatternEditor {
 
             if (this._cursor.end - this._cursor.start == defaultLength) {
                 if (this._copiedPinChannels.length > this._doc.channel) {
-                this._copiedPins = this._copiedPinChannels[this._doc.channel];
-                this._cursor.pins = this._copiedPins;
+                    this._copiedPins = this._copiedPinChannels[this._doc.channel];
+                    this._cursor.pins = this._copiedPins;
                 } else {
-                const cap: number = this._doc.song.getVolumeCap(false);
-                this._cursor.pins = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, cap)];
-            }
+                    const cap: number = this._doc.song.getVolumeCap(false);
+                    this._cursor.pins = [makeNotePin(0, 0, cap), makeNotePin(0, maxDivision, cap)];
+                }
             } else {
                 this._cursor.pins = [];
                 for (const oldPin of this._copiedPins) {
@@ -602,12 +581,12 @@ export class PatternEditor {
     }
 
     public movePlayheadToMouse(): boolean {
-		if (this._mouseOver) {
-			this._doc.synth.playhead = this._doc.bar + this._barOffset + (this._mouseX / this._editorWidth);
-			return true;
-		}
-		return false;
-	}
+        if (this._mouseOver) {
+            this._doc.synth.playhead = this._doc.bar + this._barOffset + (this._mouseX / this._editorWidth);
+            return true;
+        }
+        return false;
+    }
 
     public resetCopiedPins = (): void => {
         const maxDivision: number = this._getMaxDivision();
@@ -647,18 +626,19 @@ export class PatternEditor {
             this._svgPlayhead.setAttribute("visibility", "visible");
             const modPlayhead: number = this._doc.synth.playhead - playheadBar;
 
+            // note flash
             for (var i = 0; i < noteFlashElements.length; i++) {
                 var element: SVGPathElement = noteFlashElements[i];
-                const noteStart: number = Number(element.getAttribute("note-start"))/(this._doc.song.beatsPerBar * Config.partsPerBeat)
-                const noteEnd: number = Number(element.getAttribute("note-end"))/(this._doc.song.beatsPerBar * Config.partsPerBeat)
-                if ((modPlayhead>=noteStart)&&this._doc.prefs.notesFlashWhenPlayed) {
-                    const dist = noteEnd-noteStart
-                    element.style.opacity = String((1-(((modPlayhead-noteStart)-(dist/2))/(dist/2))))
+                const noteStart: number = Number(element.getAttribute("note-start")) / (this._doc.song.beatsPerBar * Config.partsPerBeat)
+                const noteEnd: number = Number(element.getAttribute("note-end")) / (this._doc.song.beatsPerBar * Config.partsPerBeat)
+                if ((modPlayhead >= noteStart) && this._doc.prefs.notesFlashWhenPlayed) {
+                    const dist = noteEnd - noteStart
+                    element.style.opacity = String((1 - (((modPlayhead - noteStart) - (dist / 2)) / (dist / 2))))
                 } else {
                     element.style.opacity = "0"
                 }
             }
-            
+
             if (Math.abs(modPlayhead - this._playheadX) > 0.1) {
                 this._playheadX = modPlayhead;
             } else {
@@ -668,11 +648,11 @@ export class PatternEditor {
         } else {
             this._svgPlayhead.setAttribute("visibility", "hidden");
 
-                        //lazy fix boohoo
-                        for (var i = 0; i < noteFlashElements.length; i++) {
-                            var element: SVGPathElement = noteFlashElements[i];
-                            element.style.opacity = "0"
-                        }
+            // dogeiscut: lazy fix boohoo
+            for (var i = 0; i < noteFlashElements.length; i++) {
+                var element: SVGPathElement = noteFlashElements[i];
+                element.style.opacity = "0"
+            }
         }
 
         if (this._doc.synth.playing && (this._doc.synth.recording || this._doc.prefs.autoFollow) && this._followPlayheadBar != playheadBar) {
@@ -714,8 +694,6 @@ export class PatternEditor {
         this._whenCursorPressed();
     }
 
-
-
     private _whenTouchPressed = (event: TouchEvent): void => {
         event.preventDefault();
         const boundingRect: ClientRect = this._svg.getBoundingClientRect();
@@ -729,7 +707,9 @@ export class PatternEditor {
         this._touchTime = performance.now();
         this._whenCursorPressed();
     }
-// For a given change type, check the modulator channels for a matching mod to the changed parameter. If it exists, add a pin onto the latest note, or make a new note if enough time elapsed since the last pin. 
+
+
+    // For a given change type, check the modulator channels for a matching mod to the changed parameter. If it exists, add a pin onto the latest note, or make a new note if enough time elapsed since the last pin. 
     public setModSettingsForChange(change: any, songEditor: SongEditor): boolean {
         const thisRef: PatternEditor = this;
         const timeQuantum = Math.max(4, (Config.partsPerBeat / Config.rhythms[this._doc.song.rhythm].stepsPerBeat));
@@ -738,23 +718,22 @@ export class PatternEditor {
         let changedPatterns: boolean = false;
 
         // Ceiling is applied usually to give the synth time to catch the mod updates, but rounds to 0 to avoid skipping the first part.
-        const currentPart: number = (realPart < timeQuantum / 2 ) ? 0 : Math.ceil(realPart / timeQuantum) * timeQuantum;
+        const currentPart: number = (realPart < timeQuantum / 2) ? 0 : Math.ceil(realPart / timeQuantum) * timeQuantum;
 
         // For a given setting and a given channel, find the instrument and mod number that influences the setting.
         function getMatchingInstrumentAndMod(applyToMod: number, modChannel: Channel, modInsIndex?: number | undefined, modFilterIndex?: number | undefined): number[] {
             let startIndex: number = (modInsIndex == undefined) ? 0 : modInsIndex;
             let endIndex: number = (modInsIndex == undefined) ? modChannel.instruments.length - 1 : modInsIndex;
-            for (let instrumentIndex: number = startIndex; instrumentIndex <= endIndex; instrumentIndex++ ) {
+            for (let instrumentIndex: number = startIndex; instrumentIndex <= endIndex; instrumentIndex++) {
                 let instrument: Instrument = modChannel.instruments[instrumentIndex];
                 for (let mod: number = 0; mod < Config.modCount; mod++) {
                     // Non-song application
-                    if ( instrument.modulators[mod] == applyToMod && !Config.modulators[instrument.modulators[mod]].forSong && (instrument.modChannels[mod] == thisRef._doc.channel) ) {
+                    if (instrument.modulators[mod] == applyToMod && !Config.modulators[instrument.modulators[mod]].forSong && (instrument.modChannels[mod] == thisRef._doc.channel)) {
                         // This is a check if the instrument targeted is relevant. Is it the exact one being edited? An "all" or "active" target?
                         // For "active" target it doesn't check if the instrument is active, allowing write to other active instruments from an inactive one. Should be fine since audibly while writing you'll hear what you'd expect -
                         // the current channel's active instruments being modulated, which is what most people would expect even if editing an inactive instrument.
-                        if (  thisRef._doc.getCurrentInstrument() == instrument.modInstruments[mod]
-                            || instrument.modInstruments[mod] >= thisRef._doc.song.channels[thisRef._doc.channel].instruments.length )
-                        {
+                        if (thisRef._doc.getCurrentInstrument() == instrument.modInstruments[mod]
+                            || instrument.modInstruments[mod] >= thisRef._doc.song.channels[thisRef._doc.channel].instruments.length) {
                             // If it's an eq/note filter target, one additional step is performed to see if it matches the right modFilterType.
                             if (modFilterIndex != undefined && (applyToMod == Config.modulators.dictionary["eq filter"].index || applyToMod == Config.modulators.dictionary["note filter"].index)) {
                                 if (instrument.modFilterTypes[mod] == modFilterIndex)
@@ -765,8 +744,14 @@ export class PatternEditor {
                         }
                     }
                     // Song wide application
-                    else if ( instrument.modulators[mod] == applyToMod && Config.modulators[instrument.modulators[mod]].forSong && (instrument.modChannels[mod] == -1) ) {
-                        return [instrumentIndex, mod];
+                    else if (instrument.modulators[mod] == applyToMod && Config.modulators[instrument.modulators[mod]].forSong && (instrument.modChannels[mod] == -1)) {
+                        // // check song eq? 
+                        // if (modFilterIndex != undefined && (applyToMod == Config.modulators.dictionary["song eq"].index)) {
+                        //     if (instrument.modFilterTypes[mod] == modFilterIndex)
+                        //         return [instrumentIndex, mod];
+                        // }
+                        // else
+                            return [instrumentIndex, mod];
                     }
                 }
             }
@@ -878,7 +863,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(this._doc.song.tempo - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 this._doc.song.tempo = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -890,7 +875,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.volume - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null )
+            if (slider != null)
                 instrument.volume = slider.getValueBeforeProspectiveChange();
         }
         else if (change instanceof ChangePan) {
@@ -909,7 +894,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.reverb - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.reverb = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -919,7 +904,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.distortion - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.distortion = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -929,7 +914,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.operators[change.operatorIndex].amplitude - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.operators[change.operatorIndex].amplitude = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -939,7 +924,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.feedbackAmplitude - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.feedbackAmplitude = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -949,7 +934,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.pulseWidth - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.pulseWidth = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -960,7 +945,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.decimalOffset - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.decimalOffset = slider.getValueBeforeProspectiveChange();
             }
         }
@@ -970,7 +955,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.detune - modulator.convertRealFactor - Config.detuneCenter);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.detune = slider.getValueBeforeProspectiveChange() + Config.detuneCenter;
             }
         }
@@ -980,7 +965,7 @@ export class PatternEditor {
             if (toApply) applyValues.push(instrument.vibratoDepth * 25 - modulator.convertRealFactor);
             // Move the actual value back, since we just want to update the modulated value and not the base slider.
             slider = songEditor.getSliderForModSetting(modulator.index);
-            if ( slider != null ) {
+            if (slider != null) {
                 instrument.vibratoDepth = slider.getValueBeforeProspectiveChange() / 25;
             }
         }
@@ -1251,10 +1236,10 @@ export class PatternEditor {
         }
 
         // Set the slider back to its previous value.
-        if ( slider != null )
+        if (slider != null)
             slider.updateValue(slider.getValueBeforeProspectiveChange());
 
-        for (let applyIndex: number = 0; applyIndex < applyToMods.length; applyIndex++ ) {
+        for (let applyIndex: number = 0; applyIndex < applyToMods.length; applyIndex++) {
             // Search the current bar (and only the current bar) for active instruments (and only active instruments) matching to the related mod to apply to.
             let usedPatterns: Pattern[] = [];
             let usedInstruments: Instrument[] = [];
@@ -1267,7 +1252,7 @@ export class PatternEditor {
                 let useInstrumentIndex: number = 0;
                 let useModIndex: number = 0;
 
-                if ( pattern == null ) {
+                if (pattern == null) {
                     // Hunt for instrument matching this setting and swap to it.
                     var rtn;
                     if (applyToFilterTargets.length > applyIndex)
@@ -1280,7 +1265,7 @@ export class PatternEditor {
                     // Found it in this channel, but the pattern doesn't exist. So, add a new pattern and swap to that instrument.
                     if (useInstrumentIndex != -1) {
                         sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
-                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1);
+                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
 
                         pattern = this._doc.song.getPattern(channelIndex, currentBar)!;
 
@@ -1299,7 +1284,7 @@ export class PatternEditor {
                     useModIndex = rtn[1];
 
                     if (useInstrumentIndex != -1) {
-                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1);
+                        new ChangeDuplicateSelectedReusedPatterns(this._doc, currentBar, 1, channelIndex, 1, false);
                         pattern = this._doc.song.getPattern(channelIndex, currentBar);
 
                         changedPatterns = true;
@@ -1317,20 +1302,20 @@ export class PatternEditor {
             }
 
             // If the setting wasn't found in any channel or instruments, add it to the first unused slot in any channel.
-            if ( usedInstrumentIndices.length == 0 ) {
+            if (usedInstrumentIndices.length == 0) {
                 for (let channelIndex: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount; channelIndex < this._doc.song.getChannelCount(); channelIndex++) {
                     const channel: Channel = this._doc.song.channels[channelIndex];
                     let pattern: Pattern | null = this._doc.song.getPattern(channelIndex, currentBar);
                     let useInstrument: number = -1;
                     // If there's a pattern for this channel in this bar, it only makes sense to add the new slot in that instrument somewhere or give up and move to the next.
-                    if ( pattern != null ) {
+                    if (pattern != null) {
                         useInstrument = pattern.instruments[0];
                     }
                     // No pattern for this channel, so check through all the instruments for a free slot, and add a pattern if there's a free one.
                     else {
-                        for ( let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++ ) {
-                            for (let mod: number = 0; mod < Config.modCount; mod++ ) {
-                                if ( channel.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index ) {
+                        for (let instrumentIndex: number = 0; instrumentIndex < channel.instruments.length; instrumentIndex++) {
+                            for (let mod: number = 0; mod < Config.modCount; mod++) {
+                                if (channel.instruments[instrumentIndex].modulators[mod] == Config.modulators.dictionary["none"].index) {
                                     useInstrument = instrumentIndex;
 
                                     sequence.append(new ChangeEnsurePatternExists(this._doc, channelIndex, currentBar));
@@ -1350,19 +1335,25 @@ export class PatternEditor {
                     }
 
                     // Found a suitable instrument to use, now add the setting
-                    if ( useInstrument != -1 ) {
+                    if (useInstrument != -1) {
                         let instrument: Instrument = channel.instruments[useInstrument];
                         for (let mod: number = 0; mod < Config.modCount; mod++) {
-                            if ( instrument.modulators[mod] == Config.modulators.dictionary["none"].index ) {
+                            if (instrument.modulators[mod] == Config.modulators.dictionary["none"].index) {
                                 instrument.modulators[mod] = applyToMods[applyIndex];
-                                if ( Config.modulators[applyToMods[applyIndex]].forSong ) {
+                                if (Config.modulators[applyToMods[applyIndex]].forSong) {
                                     instrument.modChannels[mod] = -1; // Song
                                 }
                                 else {
                                     instrument.modChannels[mod] = this._doc.channel;
-                                    // Set these new ones to "active" modulation for the most flexibility, if there's more one instrument in the channel.
-                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1)
-                                        instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                    
+                                    if (this._doc.song.channels[this._doc.channel].instruments.length > 1) {
+                                        // Ctrl key or Shift key: set the new mod target to "active" modulation for the most flexibility, if there's more than one instrument in the channel.
+                                        if (!this.controlMode || !this.shiftMode)
+                                            instrument.modInstruments[mod] = this._doc.song.channels[this._doc.channel].instruments.length + 1;
+                                        // Control+Shift key: Set the new mod target to the currently viewed instrument only.
+                                        else
+                                            instrument.modInstruments[mod] = this._doc.getCurrentInstrument();
+                                    }
                                     else
                                         instrument.modInstruments[mod] = 0;
 
@@ -1402,12 +1393,12 @@ export class PatternEditor {
                 let prevNote: Note | null = null;
 
                 // Debug, get an unaltered copy of the current pattern (usedPatterns[i]) for comparison if an error is thrown down below.
-                //let patternCopy: Pattern = JSON.parse(JSON.stringify(usedPatterns[i].notes));
+                // let patternCopy: Pattern = JSON.parse(JSON.stringify(usedPatterns[i].notes));
 
                 // Explicitly set the mod to the applied value, just in case the note we add isn't picked up in the next synth run.
                 const modNoteIndex: number = Config.modCount - 1 - usedModIndices[i];
                 const usedInstrument: Instrument = usedInstruments[i];
-                if ( usedInstrument.modChannels[usedModIndices[i]] >= -1 ) {
+                if (usedInstrument.modChannels[usedModIndices[i]] >= -1) {
                     // Generate list of used instruments
                     let usedNewInstrumentIndices: number[] = [];
                     if (Config.modulators[applyToMods[applyIndex]].forSong) {
@@ -1430,20 +1421,20 @@ export class PatternEditor {
                     }
 
                     for (let instrumentIndex: number = 0; instrumentIndex < usedNewInstrumentIndices.length; instrumentIndex++) {
-                        this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex] );
+                        this._doc.synth.setModValue(applyValues[applyIndex], applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
                         this._doc.synth.forceHoldMods(applyValues[applyIndex], usedInstruments[i].modChannels[usedModIndices[i]], usedNewInstrumentIndices[instrumentIndex], applyToMods[applyIndex]);
                     }
                 }
 
                 // Scan for a note starting around this point.
-                for ( let j: number = 0; j < usedPatterns[i].notes.length; j++ ) {
+                for (let j: number = 0; j < usedPatterns[i].notes.length; j++) {
                     const note: Note = usedPatterns[i].notes[j];
-                    if ( note.pitches[0] == modNoteIndex && note.start <= currentPart ) {
+                    if (note.pitches[0] == modNoteIndex && note.start <= currentPart) {
                         // Find latest pin that doesn't exceed this part.
-                        for (let pinIdx: number = 0; pinIdx < note.pins.length; pinIdx++ ) {
+                        for (let pinIdx: number = 0; pinIdx < note.pins.length; pinIdx++) {
                             const pin: NotePin = note.pins[pinIdx];
                             // Special case in there to prioritize picking the start of a note over the end of another (though they share the same time).
-                            if ( note.start + pin.time <= currentPart && (note.start + pin.time > latestPart || (note.start == latestPart) ) ) {
+                            if (note.start + pin.time <= currentPart && (note.start + pin.time > latestPart || (note.start == latestPart))) {
                                 latestPart = note.start + pin.time;
                                 latestPin = pin;
                                 latestPinIdx = pinIdx;
@@ -1509,8 +1500,8 @@ export class PatternEditor {
                     // But, we'll still smooth out previous pins if we're continuously holding.
                     if (continuous) {
                         for (let usePin: number = 0; usePin < latestNote.pins.length; usePin++) {
-                            if ( latestNote.pins[usePin].time >= prevPart && latestNote.pins[usePin].time <= currentPart)
-                            latestNote.pins[usePin].size = applyValues[applyIndex];
+                            if (latestNote.pins[usePin].time >= prevPart && latestNote.pins[usePin].time <= currentPart)
+                                latestNote.pins[usePin].size = applyValues[applyIndex];
                         }
                     }
                 }
@@ -1546,8 +1537,8 @@ export class PatternEditor {
 
                     if (continuous) {
                         for (let usePin: number = 0; usePin < latestNote.pins.length; usePin++) {
-                            if ( latestNote.pins[usePin].time >= prevPart && latestNote.pins[usePin].time <= currentPart)
-                            latestNote.pins[usePin].size = applyValues[applyIndex];
+                            if (latestNote.pins[usePin].time >= prevPart && latestNote.pins[usePin].time <= currentPart)
+                                latestNote.pins[usePin].size = applyValues[applyIndex];
                         }
                     }
                 }
@@ -1981,7 +1972,7 @@ export class PatternEditor {
                 } else if (this._cursor.pitchIndex == -1 || this._doc.song.getChannelIsMod(this._doc.channel)) {
 
                     if (!this._mouseDragging)
-                    sequence.append(new ChangePatternSelection(this._doc, 0, 0));
+                        sequence.append(new ChangePatternSelection(this._doc, 0, 0));
 
                     const bendPart: number =
                         Math.max(this._cursor.curNote.start,
@@ -2297,10 +2288,10 @@ export class PatternEditor {
                 nextPattern.notes.sort(function (a, b) { return (a.start == b.start) ? a.pitches[0] - b.pitches[0] : a.start - b.start; });
             }
             if (this._pattern != null) {
-            this._dragChange = null;
-            this._whenCursorReleased(null);
+                this._dragChange = null;
+                this._whenCursorReleased(null);
+            }
         }
-    }
         this._pattern = nextPattern;
 
         this._editorWidth = this.container.clientWidth;
@@ -2402,156 +2393,14 @@ export class PatternEditor {
             this._updateSelection();
         }
 
-        if (this._doc.prefs.advancedColorScheme == false) {
-
-            if (this._renderedFifths != this._doc.prefs.showFifth) {
-                this._renderedFifths = this._doc.prefs.showFifth;
-                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? ColorConfig.fifthNote : ColorConfig.pitchBackground);
-            }
-
-            if (this._renderedThirds != this._doc.prefs.showThird) {
-                this._renderedThirds = this._doc.prefs.showThird;
-                this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.showThird ? ColorConfig.thirdNote : ColorConfig.pitchBackground);
-            }
-
-            if (this._renderedPiano == true) {
-                this._renderedPiano = false;
-            }
-
-            if (this._renderedACS == true) {
-                this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--tonic, var(--pitch-background))" : ColorConfig.tonic);
-                this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch1-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch2-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch3-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.showThird ? "var(--third-note, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch5-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch6-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? "var(--fifth-note, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch8-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch9-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch10-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch11-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                this._renderedACS = false;
-            }
-            this._setKey = -1;
-        } else {
-            if (ColorConfig.usesPianoScheme == false) {
-                if (this._renderedACS != this._doc.prefs.advancedColorScheme) {
-                    this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--tonic, var(--pitch-background))" : ColorConfig.tonic);
-                    this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch1-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch2-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch3-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--third-note, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch5-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch6-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--fifth-note, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch8-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch9-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch10-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch11-background, var(--pitch-background))" : ColorConfig.pitchBackground);
-                    this._renderedACS = true;
-                }
-                if (this._renderedPiano == true) {
-                    this._renderedACS = false;
-                    this._renderedPiano = false;
-                    this._setKey = -1;
-                }
-            } else {
-                if (this._setKey != this._doc.song.key) {
-                        this._setKey = this._doc.song.key;
-                        this._renderedPiano = true;
-                        if ( (this._setKey == 0 ) || (this._setKey == 2 ) || (this._setKey == 4 ) || (this._setKey == 5 ) || (this._setKey == 7 ) || (this._setKey == 9 ) || (this._setKey == 11 )) {
-                            this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--white-tonic, var(--pitch-white-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[0].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--black-tonic, var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 1 ) || (this._setKey == 3 ) || (this._setKey == 4 ) || (this._setKey == 6 )|| (this._setKey == 8 ) ||(this._setKey == 10 ) || (this._setKey == 11)) {
-                            this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[1].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 0 )||(this._setKey == 2 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 10)) {
-                            this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[2].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 1 ) ||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 9 )||(this._setKey == 11)) {
-                            this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[3].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 0) ||(this._setKey == 1 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 8 )||(this._setKey == 10)) {
-                            if (this._doc.prefs.showThird == true) {
-                            this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--white-third-note, var(--pitch-white-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
-                            } else {
-                            this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                            }
-                        } else {
-                            if (this._doc.prefs.showThird == true) {
-                            this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--black-third-note, var(--pitch-black-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
-                            } else {
-                            this._backgroundPitchRows[4].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                            }
-                        }
-                        if ((this._setKey == 0 )||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 11)) {
-                            this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[5].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 1 ) ||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 10 )||(this._setKey == 11)) {
-                            this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[6].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 0) ||(this._setKey == 2) ||(this._setKey == 4 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 9 )||(this._setKey == 10)) {
-                            if (this._doc.prefs.showFifth == true) {
-                                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--white-fifth-note, var(--pitch-white-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
-                            } else {
-                                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? " var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                            }
-                        } else {
-                            if (this._doc.prefs.showFifth == true) {
-                                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--black-fifth-note, var(--pitch-black-key, var(--pitch-background)))" : ColorConfig.pitchBackground);
-                            } else {
-                                this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                            }
-                        }
-                        if ((this._setKey == 1 ) || (this._setKey == 3 ) || (this._setKey == 4 ) || (this._setKey == 6) || (this._setKey == 8) || (this._setKey == 9) || (this._setKey ==11)) {
-                            this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[8].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 0 )|| (this._setKey ==2 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 7 )||(this._setKey == 8 )||(this._setKey == 10)) {
-                            this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[9].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey ==1) ||(this._setKey == 2 )||(this._setKey == 4 )||(this._setKey == 6 )||(this._setKey == 7 )||(this._setKey == 9) ||(this._setKey == 11)) {
-                            this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[10].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                        if ((this._setKey == 0 )||(this._setKey == 1 )||(this._setKey == 3 )||(this._setKey == 5 )||(this._setKey == 6 )||(this._setKey == 8 )||(this._setKey == 10)) {
-                            this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-white-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        } else {
-                            this._backgroundPitchRows[11].setAttribute("fill", this._doc.prefs.advancedColorScheme ? "var(--pitch-black-key, var(--pitch-background))" : ColorConfig.pitchBackground);
-                        }
-                    if (this._renderedACS == false) {
-                    this._renderedACS = true;
-                    }
-                } 
-            }
-            if (this._renderedThirds != this._doc.prefs.showThird) { 
-                this._setKey = -1;
-            }
-            if (this._renderedFifths != this._doc.prefs.showFifth) { 
-                this._setKey = -1;
-            }
+        if (this._renderedFifths != this._doc.prefs.showFifth) {
+            this._renderedFifths = this._doc.prefs.showFifth;
+            this._backgroundPitchRows[7].setAttribute("fill", this._doc.prefs.showFifth ? ColorConfig.fifthNote : ColorConfig.pitchBackground);
         }
 
         for (let j: number = 0; j < Config.pitchesPerOctave; j++) {
             let scale = this._doc.song.scale == Config.scales.dictionary["Custom"].index ? this._doc.song.scaleCustom : Config.scales[this._doc.song.scale].flags;
-            
+
             this._backgroundPitchRows[j].style.visibility = scale[j] ? "visible" : "hidden";
         }
 
@@ -2583,6 +2432,8 @@ export class PatternEditor {
 
         if (this._doc.prefs.showChannels) {
             if (!this._doc.song.getChannelIsMod(this._doc.channel)) {
+                let noteFlashColor: string = "#ffffff77";
+                    if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash-secondary");
                 for (let channel: number = this._doc.song.pitchChannelCount + this._doc.song.noiseChannelCount - 1; channel >= 0; channel--) {
                     if (channel == this._doc.channel) continue;
                     if (this._doc.song.getChannelIsNoise(channel) != this._doc.song.getChannelIsNoise(this._doc.channel)) continue;
@@ -2593,7 +2444,7 @@ export class PatternEditor {
                     const octaveOffset: number = this._doc.getBaseVisibleOctave(channel) * Config.pitchesPerOctave;
                     for (const note of pattern2.notes) {
                         for (const pitch of note.pitches) {
-                            var notePath: SVGPathElement = SVG.path();
+                            let notePath: SVGPathElement = SVG.path();
                             notePath.setAttribute("fill", ColorConfig.getChannelColor(this._doc.song, channel).secondaryNote);
                             notePath.setAttribute("pointer-events", "none");
                             this._drawNote(notePath, pitch, note.start, note.pins, this._pitchHeight * 0.19, false, octaveOffset);
@@ -2601,7 +2452,7 @@ export class PatternEditor {
 
                             if (this._doc.prefs.notesFlashWhenPlayed) {
                                 notePath = SVG.path();
-                                const noteFlashColor = ColorConfig.getComputed("--note-flash-secondary") !== "" ? "var(--note-flash-secondary)" : "#ffffff77";
+                                // const noteFlashColor = ColorConfig.getComputed("--note-flash-secondary") !== "" ? "var(--note-flash-secondary)" : "#ffffff77";
                                 notePath.setAttribute("fill", noteFlashColor);
                                 notePath.setAttribute("pointer-events", "none");
                                 this._drawNote(notePath, pitch, note.start, note.pins, this._pitchHeight * 0.19, false, octaveOffset);
@@ -2611,7 +2462,7 @@ export class PatternEditor {
                                 notePath.setAttribute('note-start', String(note.start));
                                 notePath.setAttribute('note-end', String(
                                     note.end
-                                    ));
+                                ));
                             }
                         }
                     }
@@ -2624,12 +2475,14 @@ export class PatternEditor {
             const chord: Chord = instrument.getChord();
             const transition: Transition = instrument.getTransition();
             const displayNumberedChords: boolean = chord.customInterval || chord.arpeggiates || chord.strumParts > 0 || transition.slides;
+            let noteFlashColor: string = "#ffffff";
+                if (this._doc.prefs.notesFlashWhenPlayed) noteFlashColor = ColorConfig.getComputed("--note-flash");
             for (const note of this._pattern.notes) {
                 let disabled: boolean = false;
                 if (this._doc.song.getChannelIsMod(this._doc.channel)) {
                     const modIndex: number = instrument.modulators[Config.modCount - 1 - note.pitches[0]];
                     if ((modIndex == Config.modulators.dictionary["none"].index)
-                    || instrument.invalidModulators[Config.modCount - 1 - note.pitches[0]])
+                        || instrument.invalidModulators[Config.modCount - 1 - note.pitches[0]])
                         disabled = true;
                 }
                 for (let i: number = 0; i < note.pitches.length; i++) {
@@ -2639,12 +2492,7 @@ export class PatternEditor {
                     let colorSecondary: string = (disabled ? ColorConfig.disabledNoteSecondary : ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
                     notePath.setAttribute("fill", colorSecondary);
                     notePath.setAttribute("pointer-events", "none");
-                    if (this._doc.song.getChannelIsMod(this._doc.channel)) {
-                        notePath.setAttribute("class","mod-note-secondary");
-                    } else {
-                        notePath.setAttribute("class","note-secondary");
-                    }
-                    
+                    notePath.setAttribute("class", "note-secondary"); // for theming
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, false, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
                     notePath = SVG.path();
@@ -2652,15 +2500,11 @@ export class PatternEditor {
                     notePath.setAttribute("pointer-events", "none");
                     this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, true, this._octaveOffset);
                     this._svgNoteContainer.appendChild(notePath);
-                    if (this._doc.song.getChannelIsMod(this._doc.channel)) {
-                        notePath.setAttribute("class","mod-note-primary");
-                    } else {
-                        notePath.setAttribute("class","note-primary");
-                    }
- 
-                    if (this._doc.prefs.notesFlashWhenPlayed&&!disabled) {
+                    notePath.setAttribute("class", "note-primary"); // for theming
+
+                    if (this._doc.prefs.notesFlashWhenPlayed && !disabled) {
                         notePath = SVG.path();
-                        const noteFlashColor = ColorConfig.getComputed("--note-flash") !== "" ? "var(--note-flash)" : "#ffffff";
+                        // const noteFlashColor = ColorConfig.getComputed("--note-flash") !== "" ? "var(--note-flash)" : "#ffffff";
                         notePath.setAttribute("fill", noteFlashColor);
                         notePath.setAttribute("pointer-events", "none");
                         this._drawNote(notePath, pitch, note.start, note.pins, (this._pitchHeight - this._pitchBorder) / 2 + 1, true, this._octaveOffset);
@@ -2670,10 +2514,7 @@ export class PatternEditor {
                         notePath.setAttribute('note-start', String(note.start));
                         notePath.setAttribute('note-end', String(
                             note.end
-                            ));
-                        if (this._doc.song.getChannelIsMod(this._doc.channel)) { 
-                            notePath.setAttribute("class","mod-note-flash");
-                        }
+                        ));
                     }
 
                     let indicatorOffset: number = 2;
@@ -2746,121 +2587,41 @@ export class PatternEditor {
 
         const cap: number = this._doc.song.getVolumeCap(this._doc.song.getChannelIsMod(this._doc.channel), this._doc.channel, this._doc.getCurrentInstrument(this._barOffset), pitch);
 
-        let pathString: string = "";//"M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
-    if (window.localStorage.getItem("oldModNotes") != "true") {
-        if (this._doc.song.getChannelIsMod(this._doc.channel)) {
+        let pathString: string = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
 
-            let pathStringPart1 = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " ";
-            let pathStringPart2 = prettyNumber(this._pitchToPixelHeight(pitch+offset)+radius) + " ";
+        for (let i: number = 1; i < pins.length; i++) {
+            let prevPin: NotePin = nextPin;
+            nextPin = pins[i];
+            let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
+            let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
+            let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+            let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+            let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+            let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+            pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+            if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
+            if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+            pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
+        }
+        for (let i: number = pins.length - 2; i >= 0; i--) {
+            let prevPin: NotePin = nextPin;
+            nextPin = pins[i];
+            let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
+            let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
+            let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
+            let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
+            let prevSize: number = showSize ? prevPin.size / cap : 1.0;
+            let nextSize: number = showSize ? nextPin.size / cap : 1.0;
+            pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+            if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
+            if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+            pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
+        }
+        pathString += "z";
 
-            pathString = pathStringPart1 + pathStringPart2;
-            for (let i: number = 1; i < pins.length; i++) { // These are the "top" dots, the ones that appear on the top of the SVG, after this process is complete it moves to the next for loop
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber((prevHeight+radius) - (radius*2) * prevSize) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber((prevHeight+radius) - (radius*2) * prevSize) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber((nextHeight+radius) - (radius*2) * nextSize) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber((nextHeight+radius)  - (radius*2) * nextSize) + " ";
-            }
-            for (let i: number = 0; i >= 0; i--) { // These are the "bottom" dots, these are the ones that appear on the bottom of the SVG, instead of going forward like the top one, it goes backwards to match the correct number of dots needed.
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch);
-                let nextHeight: number = this._pitchToPixelHeight(pitch);
-                /*
-                let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;*/
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius) + " ";
-                
-            }
-            pathString += "z"; 
-            
-        } else {
-            pathString = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
-        
-            for (let i: number = 1; i < pins.length; i++) {
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-            }
-            for (let i: number = pins.length - 2; i >= 0; i--) {
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-            }
-            pathString += "z";
-            }
+        svgElement.setAttribute("d", pathString);
+    }
 
-            svgElement.setAttribute("d", pathString);
-        } else {
-            pathString = "M " + prettyNumber(this._partWidth * (start + nextPin.time) + endOffset) + " " + prettyNumber(this._pitchToPixelHeight(pitch - offset) + radius * (showSize ? nextPin.size / cap : 1.0)) + " ";
-            for (let i: number = 1; i < pins.length; i++) {
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) + (i == 1 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) - (i == pins.length - 1 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(prevSide + 1) + " " + prettyNumber(prevHeight - radius * prevSize) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(nextSide - 1) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight - radius * nextSize) + " ";
-            }
-            for (let i: number = pins.length - 2; i >= 0; i--) {
-                let prevPin: NotePin = nextPin;
-                nextPin = pins[i];
-                let prevSide: number = this._partWidth * (start + prevPin.time) - (i == pins.length - 2 ? endOffset : 0);
-                let nextSide: number = this._partWidth * (start + nextPin.time) + (i == 0 ? endOffset : 0);
-                let prevHeight: number = this._pitchToPixelHeight(pitch + prevPin.interval - offset);
-                let nextHeight: number = this._pitchToPixelHeight(pitch + nextPin.interval - offset);
-                let prevSize: number = showSize ? prevPin.size / cap : 1.0;
-                let nextSize: number = showSize ? nextPin.size / cap : 1.0;
-                pathString += "L " + prettyNumber(prevSide) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-                if (prevPin.interval < nextPin.interval) pathString += "L " + prettyNumber(prevSide - 1) + " " + prettyNumber(prevHeight + radius * prevSize) + " ";
-                if (prevPin.interval > nextPin.interval) pathString += "L " + prettyNumber(nextSide + 1) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-                pathString += "L " + prettyNumber(nextSide) + " " + prettyNumber(nextHeight + radius * nextSize) + " ";
-            }
-            pathString += "z";
-
-            svgElement.setAttribute("d", pathString);
-            }
-    } 
-    
     private _pitchToPixelHeight(pitch: number): number {
         return this._pitchHeight * (this._pitchCount - (pitch) - 0.5);
     }

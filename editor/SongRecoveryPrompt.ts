@@ -5,14 +5,14 @@ import { RecoveredSong, RecoveredVersion, SongRecovery, versionToKey } from "./S
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 
-	const {button, div, h2, p, select, option, iframe} = HTML;
+const { button, div, h2, p, select, option, iframe } = HTML;
 
 export class SongRecoveryPrompt implements Prompt {
 	private readonly _songContainer: HTMLDivElement = div();
 		private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
 		
 		public readonly container: HTMLDivElement = div({class: "prompt", style: "width: 300px;"},
-		div({class:"promptTitle"}, h2({class:"songRecovExt",style:"text-align: inherit;"}, ""), h2({class:"songRecovTitle"},"Song Recovery")),
+		h2("Song Recovery"),
 			div({style: "max-height: 385px; overflow-y: auto;"},
 			p("This is a TEMPORARY list of songs you have recently modified. Please keep your own backups of songs you care about! SONGS THAT USE SAMPLES WILL TAKE A WHILE TO LOAD, so be patient!"),
 			this._songContainer,
@@ -38,13 +38,13 @@ export class SongRecoveryPrompt implements Prompt {
 			}
 				
 				const player: HTMLIFrameElement = iframe({style: "width: 100%; height: 60px; border: none; display: block;"});
-			player.src = "sr-player/#song=" + window.localStorage.getItem(versionToKey(song.versions[0]));
+			player.src = "player/" + (OFFLINE ? "index.html" : "") + "#song=" + window.localStorage.getItem(versionToKey(song.versions[0]));
 				const container: HTMLDivElement = div({style: "margin: 4px 0;"}, div({class: "selectContainer", style: "width: 100%; margin: 2px 0;"}, versionMenu), player);
 			this._songContainer.appendChild(container);
 				
 			versionMenu.addEventListener("change", () => {
 				const version: RecoveredVersion = song.versions[versionMenu.selectedIndex];
-				player.contentWindow!.location.replace("sr-player/#song=" + window.localStorage.getItem(versionToKey(version)));
+				player.contentWindow!.location.replace("player/" + (OFFLINE ? "index.html" : "") + "#song=" + window.localStorage.getItem(versionToKey(version)));
 				player.contentWindow!.dispatchEvent(new Event("hashchange"));
 			});
 		}

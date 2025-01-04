@@ -520,6 +520,7 @@ export class DynamicBiquadFilter {
 		this.useMultiplicativeInputCoefficients = useMultiplicativeInputCoefficients;
 	}
 }
+
 // Filters are typically designed as analog filters first, then converted to
 // digital filters using one of two methods: the "matched z-transform" or the
 // "bilinear transform". The "bilinear transform" does a better job of
